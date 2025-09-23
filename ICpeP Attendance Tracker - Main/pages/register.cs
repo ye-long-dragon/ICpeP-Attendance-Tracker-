@@ -8,11 +8,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace ICpeP_Attendance_Tracker___Main
+namespace ICpeP_Attendance_Tracker___Main.pages
 {
-    public partial class Form1 : Form
+    public partial class register : UserControl
     {
-        public Form1()
+        public register()
         {
             InitializeComponent();
         }

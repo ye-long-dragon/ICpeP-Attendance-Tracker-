@@ -1,6 +1,6 @@
 ﻿namespace ICpeP_Attendance_Tracker___Main
 {
-    partial class Form1
+    partial class AttendanceTracker
     {
         /// <summary>
         /// Required designer variable.
@@ -28,20 +28,32 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.mainPanel = new Guna.UI2.WinForms.Guna2Panel();
             this.SuspendLayout();
             // 
-            // Form1
+            // mainPanel
+            // 
+            this.mainPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.mainPanel.Location = new System.Drawing.Point(0, 0);
+            this.mainPanel.Name = "mainPanel";
+            this.mainPanel.Size = new System.Drawing.Size(1009, 602);
+            this.mainPanel.TabIndex = 0;
+            // 
+            // AttendanceTracker
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1009, 602);
-            this.Name = "Form1";
+            this.Controls.Add(this.mainPanel);
+            this.Name = "AttendanceTracker";
             this.Text = "Form1";
             this.ResumeLayout(false);
 
         }
 
         #endregion
+
+        private Guna.UI2.WinForms.Guna2Panel mainPanel;
     }
 }
 
