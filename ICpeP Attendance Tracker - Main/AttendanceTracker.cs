@@ -21,7 +21,7 @@ namespace ICpeP_Attendance_Tracker___Main
         }
 
         // Method: One-time setup for all UserControls (add to container once)
-        private void InitializeNavigation()
+        public void InitializeNavigation()
         {
             // Assume mainPanel is a Panel on your form (designer-added)
             // If no panel, replace 'mainPanel' with 'this' to add directly to form
@@ -57,6 +57,8 @@ namespace ICpeP_Attendance_Tracker___Main
                 // Hide and optionally dispose if not reusing (but here we reuse, so just hide)
                 currentControl.Visible = false;
                 // If one-time use: currentControl.Dispose(); but avoid for navigation
+                //remove mainPanel.Controls.Remove(currentControl);
+                this.Controls.Remove(currentControl); // Optional: remove if not reusing
             }
 
             currentControl = newControl;
@@ -71,18 +73,18 @@ namespace ICpeP_Attendance_Tracker___Main
         }
 
         // Convenience Methods (for easy calling from buttons/menus)
-        private void ShowRegisterPage()
+        public void ShowRegisterPage()
         {
             ShowUserControl(registerControl);
         }
 
-        private void ShowMainPage()
+        public void ShowMainPage()
         {
             ShowUserControl(mainControl);
         }
 
         // Example: Hide all (e.g., for a "home" or logout state)
-        private void HideCurrentControl()
+        public void HideCurrentControl()
         {
             if (currentControl != null)
             {
@@ -101,12 +103,12 @@ namespace ICpeP_Attendance_Tracker___Main
             base.OnFormClosing(e);
         }
 
-        private void btnRegister_Click(object sender, EventArgs e)
+        public void btnRegister_Click(object sender, EventArgs e)
         {
             ShowRegisterPage();
         }
 
-        private void btnMain_Click(object sender, EventArgs e)
+        public void btnMain_Click(object sender, EventArgs e)
         {
             ShowMainPage();
         }

@@ -16,5 +16,13 @@ namespace ICpeP_Attendance_Tracker___Main.pages
         {
             InitializeComponent();
         }
+
+        private void btnBack_Click(object sender, EventArgs e)
+        {
+            if (this.ParentForm is AttendanceTracker form)
+            {
+                form.ShowMainPage();  // Switches back to main
+            }
+        }
     }
 }

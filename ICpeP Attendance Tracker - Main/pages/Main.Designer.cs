@@ -149,6 +149,7 @@
             this.btnRegister.Size = new System.Drawing.Size(202, 69);
             this.btnRegister.TabIndex = 1;
             this.btnRegister.Text = "Register Student";
+            this.btnRegister.Click += new System.EventHandler(this.btnRegister_Click);
             // 
             // welcome
             // 
