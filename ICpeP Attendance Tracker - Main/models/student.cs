@@ -27,6 +27,10 @@ namespace ICpeP_Attendance_Tracker___Main.models
             this.status = "Registered";
         }
 
+        public student()
+        {
+        }
+
         public void checkIn(string RFID)
         {
             if (RFID != this.rfid)

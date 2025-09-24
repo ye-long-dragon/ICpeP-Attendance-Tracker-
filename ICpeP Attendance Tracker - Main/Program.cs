@@ -16,6 +16,7 @@ namespace ICpeP_Attendance_Tracker___Main
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new AttendanceTracker());
         }
     }

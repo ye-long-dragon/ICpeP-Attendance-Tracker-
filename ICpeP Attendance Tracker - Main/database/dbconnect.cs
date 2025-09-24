@@ -25,6 +25,7 @@ namespace ICpeP_Attendance_Tracker___Main.database
                                "Username=postgres;" +
                                "Password=SYSDEV.MMCM.ICpeP;" +  // WARNING: Hardcoded – see notes below for secure fix!
                                "SslMode=Require;" +  // Required for Supabase
+                               "Trust Server Certificate=true;" + // For self-signed certs (Supabase)
                                "Pooling=true;" +     // Enable connection pooling for performance
                                "Timeout=30;";        // Connection timeout
 
@@ -266,7 +267,7 @@ namespace ICpeP_Attendance_Tracker___Main.database
         }
 
         // READ: Get a single attendance record by id
-        public static Dictionary<string, object> ReadAttendanceById(int attendanceId)
+        public static Dictionary<string, object> ReadAttendanceById(long attendanceId)
         {
             try
             {
@@ -329,7 +330,7 @@ namespace ICpeP_Attendance_Tracker___Main.database
         }
 
         // UPDATE: Update an existing attendance record by id (using 'student' object for fields)
-        public static bool UpdateAttendance(int attendanceId, student student)
+        public static bool UpdateAttendance(long attendanceId, student student)
         {
             try
             {
@@ -370,7 +371,7 @@ namespace ICpeP_Attendance_Tracker___Main.database
         }
 
         // DELETE: Delete an attendance record by id
-        public static bool DeleteAttendance(int attendanceId)
+        public static bool DeleteAttendance(long attendanceId)
         {
             try
             {
@@ -442,54 +443,67 @@ namespace ICpeP_Attendance_Tracker___Main.database
             }
         }
 
-        // READ: Get all students
-        public static List<Dictionary<string, object>> ReadAllStudents()
-        {
-            var results = new List<Dictionary<string, object>>();
 
-            try
+        public static List<student> ReadAllStudents()  // Return List<Student> (typed)
             {
-                using (var connection = CreateShortLivedConnection())
+                var students = new List<student>();
+
+                try
                 {
-                    connection.Open();
-                    using (var command = new NpgsqlCommand(
-                        "SELECT id, rfid, first_name, last_name, year_level FROM studentsinformation ORDER BY id", connection))
+                    using (var connection = CreateShortLivedConnection())
                     {
-                        using (var reader = command.ExecuteReader())
+                        connection.Open();
+                        using (var command = new NpgsqlCommand(
+                            "SELECT student_id, rfid, first_name, last_name, year_level " +
+                            "FROM studentsinformation " +
+                            "ORDER BY last_name, first_name",  // Alphabetical for UX
+                            connection))
                         {
+                            using (var reader = command.ExecuteReader())
+                            {
                             while (reader.Read())
                             {
-                                var row = new Dictionary<string, object>();
-
-                                // Using column name with reader["column"]
-                                row["id"] = reader["id"] == DBNull.Value ? null : reader["id"];
-                                row["rfid"] = reader["rfid"] == DBNull.Value ? null : reader["rfid"].ToString();
-                                row["first_name"] = reader["first_name"] == DBNull.Value ? null : reader["first_name"].ToString();
-                                row["last_name"] = reader["last_name"] == DBNull.Value ? null : reader["last_name"].ToString();
-                                row["year_level"] = reader["year_level"] == DBNull.Value ? null : reader["year_level"].ToString();
-
-                                results.Add(row);
+                                students.Add(new student()
+                                {
+                                    student_id = reader.IsDBNull(reader.GetOrdinal("student_id"))
+                                                    ? 0
+                                                    : reader.GetInt32(reader.GetOrdinal("student_id")),
+                                    rfid = reader.IsDBNull(reader.GetOrdinal("rfid"))
+                                                    ? string.Empty
+                                                    : reader.GetString(reader.GetOrdinal("rfid")),
+                                    first_name = reader.IsDBNull(reader.GetOrdinal("first_name"))
+                                                    ? string.Empty
+                                                    : reader.GetString(reader.GetOrdinal("first_name")),
+                                    last_name = reader.IsDBNull(reader.GetOrdinal("last_name"))
+                                                    ? string.Empty
+                                                    : reader.GetString(reader.GetOrdinal("last_name")),
+                                    year_level = reader.IsDBNull(reader.GetOrdinal("year_level"))
+                                                    ? 0
+                                                    : reader.GetInt32(reader.GetOrdinal("year_level"))
+                                });
                             }
 
                         }
                     }
-                    Debug.WriteLine($"✅ Retrieved {results.Count} students.");
+                        Debug.WriteLine($"✅ Retrieved {students.Count} students.");
+                    }
                 }
-            }
-            catch (NpgsqlException ex)
-            {
-                Debug.WriteLine($"❌ Npgsql Error in ReadAllStudents: {ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"❌ Error in ReadAllStudents: {ex.Message}");
+                catch (NpgsqlException ex)
+                {
+                    Debug.WriteLine($"❌ Npgsql Error in ReadAllStudents: {ex.Message}");
+                    // e.g., If column is string in DB, error here – change GetInt32 to GetString and model to string
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"❌ Error in ReadAllStudents: {ex.Message}");
+                }
+
+                return students;
             }
 
-            return results;
-        }
 
-        // READ: Get a single student by id
-        public static Dictionary<string, object> ReadStudentById(int studentId)
+    // READ: Get a single student by id
+    public static Dictionary<string, object> ReadStudentById(long studentId)
         {
             try
             {
@@ -589,7 +603,7 @@ namespace ICpeP_Attendance_Tracker___Main.database
         }
 
         // DELETE: Delete a student by id
-        public static bool DeleteStudent(int studentId)
+        public static bool DeleteStudent(long studentId)
         {
             try
             {

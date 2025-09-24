@@ -79,7 +79,7 @@
             this.btnRegister.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Bold);
             this.btnRegister.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(6)))), ((int)(((byte)(30)))), ((int)(((byte)(54)))));
             this.btnRegister.ImageSize = new System.Drawing.Size(40, 40);
-            this.btnRegister.Location = new System.Drawing.Point(380, 205);
+            this.btnRegister.Location = new System.Drawing.Point(374, 220);
             this.btnRegister.Name = "btnRegister";
             this.btnRegister.Size = new System.Drawing.Size(300, 45);
             this.btnRegister.TabIndex = 5;
@@ -97,6 +97,7 @@
             this.lblYearLevel.Size = new System.Drawing.Size(135, 31);
             this.lblYearLevel.TabIndex = 10;
             this.lblYearLevel.Text = "Year Level:";
+            this.lblYearLevel.TextAlignment = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // cmbYearLevel
             // 
@@ -134,6 +135,7 @@
             this.lblLastName.Size = new System.Drawing.Size(134, 31);
             this.lblLastName.TabIndex = 8;
             this.lblLastName.Text = "Last Name:";
+            this.lblLastName.TextAlignment = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // txtLastName
             // 
@@ -165,6 +167,7 @@
             this.lblFirstName.Size = new System.Drawing.Size(138, 31);
             this.lblFirstName.TabIndex = 6;
             this.lblFirstName.Text = "First Name:";
+            this.lblFirstName.TextAlignment = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // txtFirstName
             // 
@@ -196,6 +199,7 @@
             this.lblStudentId.Size = new System.Drawing.Size(131, 31);
             this.lblStudentId.TabIndex = 4;
             this.lblStudentId.Text = "Student ID:";
+            this.lblStudentId.TextAlignment = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // txtStudentId
             // 
@@ -227,6 +231,7 @@
             this.lblRFID.Size = new System.Drawing.Size(90, 31);
             this.lblRFID.TabIndex = 2;
             this.lblRFID.Text = "RFID# :";
+            this.lblRFID.TextAlignment = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // txtRFID
             // 
@@ -258,6 +263,7 @@
             this.regis.Size = new System.Drawing.Size(207, 38);
             this.regis.TabIndex = 0;
             this.regis.Text = "Register Student";
+            this.regis.TextAlignment = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // pictureBox1
             // 

@@ -10,6 +10,7 @@ namespace ICpeP_Attendance_Tracker___Main
         // Instantiate UserControls once (for reuse - efficient)
         private UserControl registerControl = new pages.register();
         private UserControl mainControl = new pages.Main();  // Renamed for clarity (was 'main')
+        private UserControl studentListControl = new pages.studentList();
 
         // If you have more, add here e.g., private UserControl settingsControl = new pages.Settings();
 
@@ -83,6 +84,12 @@ namespace ICpeP_Attendance_Tracker___Main
             ShowUserControl(mainControl);
         }
 
+        public void ShowStudentList()
+        {
+            
+            ShowUserControl(studentListControl);
+        }
+
         // Example: Hide all (e.g., for a "home" or logout state)
         public void HideCurrentControl()
         {
@@ -111,6 +118,31 @@ namespace ICpeP_Attendance_Tracker___Main
         public void btnMain_Click(object sender, EventArgs e)
         {
             ShowMainPage();
+        }
+
+        private void btnTimeIn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnTimeOut_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnRegisterStudent_Click(object sender, EventArgs e)
+        {
+            ShowRegisterPage();
+        }
+
+        private void btnHome_Click(object sender, EventArgs e)
+        {
+            ShowMainPage();
+        }
+
+        private void btnStudentList_Click(object sender, EventArgs e)
+        {
+            ShowStudentList();
         }
     }
 }

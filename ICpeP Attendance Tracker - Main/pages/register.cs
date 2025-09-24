@@ -61,7 +61,7 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                 return;
             }
 
-            if (cmbYearLevel.SelectedIndex <= 0) // assuming 0 = "Select Year"
+            if (cmbYearLevel.SelectedIndex <= -1) // assuming 0 = "Select Year"
             {
                 MessageBox.Show("Select Year Level");
                 return;
@@ -78,7 +78,7 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             student student = new student(rfid, studentid, firstName, lastName, yearLevel);
 
             
-                var existingStudent = dbconnect.ReadStudentById((int)studentid);
+                var existingStudent = dbconnect.ReadStudentById(studentid);
                 if (existingStudent != null)
                 {
                     MessageBox.Show($"Student ID {studentid} already exists. Use a different ID or update the existing record.",

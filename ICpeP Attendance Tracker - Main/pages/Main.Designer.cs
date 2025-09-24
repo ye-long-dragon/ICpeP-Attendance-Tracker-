@@ -162,6 +162,7 @@
             this.welcome.Size = new System.Drawing.Size(625, 38);
             this.welcome.TabIndex = 0;
             this.welcome.Text = "Welcome to the MMCM.ICpeP Attendance Tracker";
+            this.welcome.TextAlignment = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // Main
             // 
