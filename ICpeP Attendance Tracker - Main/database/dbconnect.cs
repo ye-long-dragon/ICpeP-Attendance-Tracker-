@@ -2,6 +2,9 @@
 using System.Data;
 using System.Diagnostics;
 using Npgsql;
+using System.Collections.Generic;
+using ICpeP_Attendance_Tracker___Main.models;
+using System.Windows.Forms;  // For returning lists of data
 
 namespace ICpeP_Attendance_Tracker___Main.database
 {
@@ -20,7 +23,7 @@ namespace ICpeP_Attendance_Tracker___Main.database
                                "Port=5432;" +
                                "Database=postgres;" +
                                "Username=postgres;" +
-                               "Password=SYSDEV.MMCM.ICpeP;" +  // WARNING: Hardcoded – see Step 2 for secure fix!
+                               "Password=SYSDEV.MMCM.ICpeP;" +  // WARNING: Hardcoded – see notes below for secure fix!
                                "SslMode=Require;" +  // Required for Supabase
                                "Pooling=true;" +     // Enable connection pooling for performance
                                "Timeout=30;";        // Connection timeout
@@ -96,6 +99,7 @@ namespace ICpeP_Attendance_Tracker___Main.database
         public static NpgsqlConnection CreateShortLivedConnection()
         {
             return new NpgsqlConnection(connectionString);
+            MessageBox.Show("Connection Successfully Established");
         }
 
         // Optional: Test connection (call this in your app startup)
@@ -120,5 +124,503 @@ namespace ICpeP_Attendance_Tracker___Main.database
                 return false;
             }
         }
+
+        // =============================================================================
+        // CRUD OPERATIONS FOR ATTENDANCE TABLE
+        // =============================================================================
+        // Assumptions:
+        // - Table: 'attendance' with columns: id (SERIAL PRIMARY KEY), student_id (INTEGER), date (DATE), status (VARCHAR(50) e.g., 'Present', 'Absent')
+        // - If your schema differs, adjust the SQL queries and parameters accordingly.
+        // - All methods use parameterized queries to prevent SQL injection.
+        // - Uses short-lived connections for safety (avoids holding connections open).
+        // - Returns bool for success/failure on C/U/D; returns data for R.
+        // - Error handling logs to Debug; you can extend to throw exceptions or return custom errors.
+
+
+        //=========================================================================================
+        //==================================ATTENDANCE=============================================
+        //=========================================================================================
+        // CREATE: Insert a new attendance record
+        public static bool CreateAttendance(student student)
+        {
+            try
+            {
+                using (var connection = CreateShortLivedConnection())
+                {
+                    connection.Open();
+
+                    using (var command = new NpgsqlCommand(
+                        @"INSERT INTO students_attendance (student_id, rfid, date, status) 
+                  VALUES (@student_id, @rfid, @date, @status)", connection))
+                    {
+                        command.Parameters.AddWithValue("@student_id", student.student_id);
+                        command.Parameters.AddWithValue("@rfid", student.rfid);
+
+                        // Store timestamp, or only date part if you prefer
+                        command.Parameters.AddWithValue("@date", student.date != default
+                            ? student.date
+                            : DateTime.UtcNow);
+
+                        command.Parameters.AddWithValue("@status",
+                            string.IsNullOrWhiteSpace(student.status)
+                            ? (object)DBNull.Value
+                            : student.status);
+
+                        int rowsAffected = command.ExecuteNonQuery();
+                        Debug.WriteLine($"✅ Attendance created successfully. Rows affected: {rowsAffected}");
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (NpgsqlException ex)
+            {
+                Debug.WriteLine($"❌ Npgsql Error in CreateAttendance: {ex.Message}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error in CreateAttendance: {ex.Message}");
+                return false;
+            }
+        }
+
+        // READ: Get all attendance records (with optional filters)
+        public static List<Dictionary<string, object>> ReadAllAttendance(int? studentId = null, DateTime? fromDate = null, DateTime? toDate = null)
+        {
+            var results = new List<Dictionary<string, object>>();
+
+            try
+            {
+                using (var connection = CreateShortLivedConnection())
+                {
+                    connection.Open();
+                    string sql = @"SELECT id, student_id, rfid, date, status FROM students_attendance";
+                    var parameters = new List<NpgsqlParameter>();
+
+                    // Build WHERE clause with filters
+                    bool hasFilter = false;
+                    if (studentId.HasValue)
+                    {
+                        sql += (hasFilter ? " AND" : " WHERE") + " student_id = @student_id";
+                        parameters.Add(new NpgsqlParameter("@student_id", studentId.Value));
+                        hasFilter = true;
+                    }
+                    if (fromDate.HasValue)
+                    {
+                        sql += (hasFilter ? " AND" : " WHERE") + " date >= @from_date";
+                        parameters.Add(new NpgsqlParameter("@from_date", fromDate.Value));
+                        hasFilter = true;
+                    }
+                    if (toDate.HasValue)
+                    {
+                        sql += (hasFilter ? " AND" : " WHERE") + " date <= @to_date";
+                        parameters.Add(new NpgsqlParameter("@to_date", toDate.Value));
+                        hasFilter = true;
+                    }
+
+                    sql += " ORDER BY date DESC, id";  // Recent first
+
+                    using (var command = new NpgsqlCommand(sql, connection))
+                    {
+                        foreach (var param in parameters)
+                        {
+                            command.Parameters.Add(param);
+                        }
+
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                var row = new Dictionary<string, object>();
+
+                                int idIdx = reader.GetOrdinal("id");
+                                int studentIdIdx = reader.GetOrdinal("student_id");
+                                int rfidIdx = reader.GetOrdinal("rfid");
+                                int dateIdx = reader.GetOrdinal("date");
+                                int statusIdx = reader.GetOrdinal("status");
+
+                                row["id"] = reader.IsDBNull(idIdx) ? (object)null : reader.GetValue(idIdx);
+                                row["student_id"] = reader.IsDBNull(studentIdIdx) ? (object)null : reader.GetInt32(studentIdIdx);
+                                row["rfid"] = reader.IsDBNull(rfidIdx) ? (object)null : reader.GetString(rfidIdx);
+                                row["date"] = reader.IsDBNull(dateIdx) ? (object)null : reader.GetDateTime(dateIdx);
+                                row["status"] = reader.IsDBNull(statusIdx) ? (object)null : reader.GetString(statusIdx);
+
+                                results.Add(row);
+                            }
+
+                        }
+                    }
+                    Debug.WriteLine($"✅ Retrieved {results.Count} attendance records.");
+                }
+            }
+            catch (NpgsqlException ex)
+            {
+                Debug.WriteLine($"❌ Npgsql Error in ReadAllAttendance: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error in ReadAllAttendance: {ex.Message}");
+            }
+
+            return results;
+        }
+
+        // READ: Get a single attendance record by id
+        public static Dictionary<string, object> ReadAttendanceById(int attendanceId)
+        {
+            try
+            {
+                using (var connection = CreateShortLivedConnection())
+                {
+                    connection.Open();
+                    using (var command = new NpgsqlCommand(
+                        @"SELECT id, student_id, rfid, date, status 
+                      FROM students_attendance WHERE id = @id", connection))
+                    {
+                        command.Parameters.AddWithValue("@id", attendanceId);
+
+                        using (var reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                var row = new Dictionary<string, object>();
+
+                                row["student_id"] = reader.GetInt32(reader.GetOrdinal("student_id"));
+                                row["rfid"] = reader.IsDBNull(reader.GetOrdinal("rfid"))
+                                    ? null
+                                    : reader.GetString(reader.GetOrdinal("rfid"));
+
+                                row["first_name"] = reader.IsDBNull(reader.GetOrdinal("first_name"))
+                                    ? null
+                                    : reader.GetString(reader.GetOrdinal("first_name"));
+
+                                row["last_name"] = reader.IsDBNull(reader.GetOrdinal("last_name"))
+                                    ? null
+                                    : reader.GetString(reader.GetOrdinal("last_name"));
+
+                                row["year_level"] = reader.GetInt32(reader.GetOrdinal("year_level"));
+
+                                row["status"] = reader.IsDBNull(reader.GetOrdinal("status"))
+                                    ? null
+                                    : reader.GetString(reader.GetOrdinal("status"));
+
+                                row["date"] = reader.GetDateTime(reader.GetOrdinal("date"));
+
+                                Debug.WriteLine($"✅ Retrieved attendance record ID {row["student_id"]}.");
+                                return row;
+                            }
+
+                        }
+                    }
+                }
+                Debug.WriteLine($"⚠️ No attendance record found for ID {attendanceId}.");
+                return null;
+            }
+            catch (NpgsqlException ex)
+            {
+                Debug.WriteLine($"❌ Npgsql Error in ReadAttendanceById: {ex.Message}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error in ReadAttendanceById: {ex.Message}");
+                return null;
+            }
+        }
+
+        // UPDATE: Update an existing attendance record by id (using 'student' object for fields)
+        public static bool UpdateAttendance(int attendanceId, student student)
+        {
+            try
+            {
+                using (var connection = CreateShortLivedConnection())
+                {
+                    connection.Open();
+                    using (var command = new NpgsqlCommand(
+                        @"UPDATE students_attendance 
+                      SET student_id = @student_id, rfid = @rfid, date = @date, status = @status 
+                      WHERE id = @id", connection))
+                    {
+                        command.Parameters.AddWithValue("@id", attendanceId);
+                        command.Parameters.AddWithValue("@student_id", student.student_id);
+                        command.Parameters.AddWithValue("@rfid", string.IsNullOrWhiteSpace(student.rfid) ? (object)DBNull.Value : student.rfid);
+
+                        // Use provided date or current if default
+                        command.Parameters.AddWithValue("@date", student.date != default ? student.date : DateTime.UtcNow);
+
+                        command.Parameters.AddWithValue("@status",
+                            string.IsNullOrWhiteSpace(student.status) ? (object)DBNull.Value : student.status);
+
+                        int rowsAffected = command.ExecuteNonQuery();
+                        Debug.WriteLine($"✅ Attendance updated successfully. Rows affected: {rowsAffected}");
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (NpgsqlException ex)
+            {
+                Debug.WriteLine($"❌ Npgsql Error in UpdateAttendance: {ex.Message}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error in UpdateAttendance: {ex.Message}");
+                return false;
+            }
+        }
+
+        // DELETE: Delete an attendance record by id
+        public static bool DeleteAttendance(int attendanceId)
+        {
+            try
+            {
+                using (var connection = CreateShortLivedConnection())
+                {
+                    connection.Open();
+                    using (var command = new NpgsqlCommand(
+                        "DELETE FROM students_attendance WHERE id = @id", connection))
+                    {
+                        command.Parameters.AddWithValue("@id", attendanceId);
+
+                        int rowsAffected = command.ExecuteNonQuery();
+                        Debug.WriteLine($"✅ Attendance deleted successfully. Rows affected: {rowsAffected}");
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (NpgsqlException ex)
+            {
+                Debug.WriteLine($"❌ Npgsql Error in DeleteAttendance: {ex.Message}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error in DeleteAttendance: {ex.Message}");
+                return false;
+            }
+        }
+
+
+        //=============================================================================================
+        //===================================STUDENTS=================================================
+        //============================================================================================
+        //CREATE: Insert a new student
+        public static void RegisterStudent(student student)
+        {
+            try
+            {
+                using(var connection = CreateShortLivedConnection())
+                {
+                    connection.Open();
+                    MessageBox.Show("Connection Established");
+                    using(var command = new NpgsqlCommand(
+                        "INSERT INTO studentsinformation (id, rfid, first_name, last_name, year_level) VALUES (@student_id, @rfid, @first_name, @last_name, @year_level)", connection))
+                    {
+                        command.Parameters.AddWithValue("@student_id", student.student_id);
+                        command.Parameters.AddWithValue("@rfid", student.rfid);
+                        command.Parameters.AddWithValue("@first_name", student.first_name);
+                        command.Parameters.AddWithValue("@last_name", student.last_name);
+                        command.Parameters.AddWithValue("@year_level", student.year_level);
+
+                        int rowsAffected = command.ExecuteNonQuery();
+                        Debug.WriteLine($"Student Registered Successfully. Rows affected: {rowsAffected}");
+                        MessageBox.Show("Student Registered Successfully");
+                        
+                    }
+                }
+            }
+            catch (NpgsqlException ex)
+            {
+                Debug.WriteLine($"Npgsql Error in CreateAttendance: {ex.Message}");
+                MessageBox.Show(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in CreateAttendance: {ex.Message}");
+                MessageBox.Show(ex.Message);
+
+            }
+        }
+
+        // READ: Get all students
+        public static List<Dictionary<string, object>> ReadAllStudents()
+        {
+            var results = new List<Dictionary<string, object>>();
+
+            try
+            {
+                using (var connection = CreateShortLivedConnection())
+                {
+                    connection.Open();
+                    using (var command = new NpgsqlCommand(
+                        "SELECT id, rfid, first_name, last_name, year_level FROM studentsinformation ORDER BY id", connection))
+                    {
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                var row = new Dictionary<string, object>();
+
+                                // Using column name with reader["column"]
+                                row["id"] = reader["id"] == DBNull.Value ? null : reader["id"];
+                                row["rfid"] = reader["rfid"] == DBNull.Value ? null : reader["rfid"].ToString();
+                                row["first_name"] = reader["first_name"] == DBNull.Value ? null : reader["first_name"].ToString();
+                                row["last_name"] = reader["last_name"] == DBNull.Value ? null : reader["last_name"].ToString();
+                                row["year_level"] = reader["year_level"] == DBNull.Value ? null : reader["year_level"].ToString();
+
+                                results.Add(row);
+                            }
+
+                        }
+                    }
+                    Debug.WriteLine($"✅ Retrieved {results.Count} students.");
+                }
+            }
+            catch (NpgsqlException ex)
+            {
+                Debug.WriteLine($"❌ Npgsql Error in ReadAllStudents: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error in ReadAllStudents: {ex.Message}");
+            }
+
+            return results;
+        }
+
+        // READ: Get a single student by id
+        public static Dictionary<string, object> ReadStudentById(int studentId)
+        {
+            try
+            {
+                using (var connection = CreateShortLivedConnection())
+                {
+                    connection.Open();
+                    using (var command = new NpgsqlCommand(
+                        "SELECT id, rfid, first_name, last_name, year_level FROM studentsinformation WHERE id = @id", connection))
+                    {
+                        command.Parameters.AddWithValue("@id", studentId);
+
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                var row = new Dictionary<string, object>();
+
+                                // Using column name with reader["column"]
+                                row["id"] = reader["id"] == DBNull.Value ? null : reader["id"];
+                                row["rfid"] = reader["rfid"] == DBNull.Value ? null : reader["rfid"].ToString();
+                                row["first_name"] = reader["first_name"] == DBNull.Value ? null : reader["first_name"].ToString();
+                                row["last_name"] = reader["last_name"] == DBNull.Value ? null : reader["last_name"].ToString();
+                                row["year_level"] = reader["year_level"] == DBNull.Value ? null : reader["year_level"].ToString();
+
+                                return row; 
+                            }
+
+                        }
+                    }
+                }
+                Debug.WriteLine($"⚠️ No student found for ID {studentId}.");
+                return null;  // Or throw NotFoundException if preferred
+            }
+            catch (NpgsqlException ex)
+            {
+                Debug.WriteLine($"❌ Npgsql Error in ReadStudentById: {ex.Message}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error in ReadStudentById: {ex.Message}");
+                return null;
+            }
+        }
+
+        // UPDATE: Update an existing student by id (using full 'student' object)
+        public static bool UpdateStudent(student student)
+        {
+            try
+            {
+                using (var connection = CreateShortLivedConnection())
+                {
+                    connection.Open();
+
+                    using (var command = new NpgsqlCommand(@"
+                                                    UPDATE studentsinformation
+                                                    SET rfid = @rfid,
+                                                        first_name = @first_name,
+                                                        last_name = @last_name,
+                                                        year_level = @year_level
+                                                    WHERE id = @id", connection))
+                    {
+                        // Always required
+                        command.Parameters.AddWithValue("@id", student.student_id);
+
+                        // Nullable / optional fields
+                        command.Parameters.AddWithValue("@rfid",
+                            string.IsNullOrWhiteSpace(student.rfid) ? (object)DBNull.Value : student.rfid);
+
+                        command.Parameters.AddWithValue("@first_name",
+                            string.IsNullOrWhiteSpace(student.first_name) ? (object)DBNull.Value : student.first_name);
+
+                        command.Parameters.AddWithValue("@last_name",
+                            string.IsNullOrWhiteSpace(student.last_name) ? (object)DBNull.Value : student.last_name);
+
+                        // Year level as int (only insert if > 0)
+                        command.Parameters.AddWithValue("@year_level",
+                            student.year_level > 0 ? (object)student.year_level : DBNull.Value);
+
+                        int rowsAffected = command.ExecuteNonQuery();
+                        Debug.WriteLine($"✅ Student updated successfully. Rows affected: {rowsAffected}");
+                        return rowsAffected > 0;
+                    }
+                }
+
+            }
+            catch (NpgsqlException ex)
+            {
+                Debug.WriteLine($"❌ Npgsql Error in UpdateStudent: {ex.Message}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error in UpdateStudent: {ex.Message}");
+                return false;
+            }
+        }
+
+        // DELETE: Delete a student by id
+        public static bool DeleteStudent(int studentId)
+        {
+            try
+            {
+                using (var connection = CreateShortLivedConnection())
+                {
+                    connection.Open();
+                    using (var command = new NpgsqlCommand(
+                        "DELETE FROM studentsinformation WHERE id = @id", connection))
+                    {
+                        command.Parameters.AddWithValue("@id", studentId);
+
+                        int rowsAffected = command.ExecuteNonQuery();
+                        Debug.WriteLine($"✅ Student deleted successfully. Rows affected: {rowsAffected}");
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (NpgsqlException ex)
+            {
+                Debug.WriteLine($"❌ Npgsql Error in DeleteStudent: {ex.Message}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error in DeleteStudent: {ex.Message}");
+                return false;
+            }
+        }
+
+
+
+
     }
 }

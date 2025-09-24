@@ -9,15 +9,15 @@ namespace ICpeP_Attendance_Tracker___Main.models
 {
     public class student
     {
-        public int rfid { get; set; }
-        public int student_id { get; set; }
+        public string rfid { get; set; }
+        public long student_id { get; set; }
         public string first_name { get; set; }
         public string last_name { get; set; }
         public int year_level { get; set; }
         public DateTime date { get; set; }
         public string status { get; set; }
 
-        public student(int RFID, int StudentId, string FirstName, string LastName, int YearLevel)
+        public student(string RFID, long StudentId, string FirstName, string LastName, int YearLevel)
         {
             this.rfid = RFID;
             this.student_id = StudentId;
@@ -27,7 +27,7 @@ namespace ICpeP_Attendance_Tracker___Main.models
             this.status = "Registered";
         }
 
-        public void checkIn(int RFID)
+        public void checkIn(string RFID)
         {
             if (RFID != this.rfid)
             {
@@ -37,7 +37,7 @@ namespace ICpeP_Attendance_Tracker___Main.models
             this.status = "Checked In";
         }
 
-        public void checkOut(int RFID)
+        public void checkOut(string RFID)
         {
             if (RFID != this.rfid)
             {

@@ -30,6 +30,7 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(register));
             this.guna2Panel2 = new Guna.UI2.WinForms.Guna2Panel();
+            this.btnRegister = new Guna.UI2.WinForms.Guna2Button();
             this.lblYearLevel = new Guna.UI2.WinForms.Guna2HtmlLabel();
             this.cmbYearLevel = new Guna.UI2.WinForms.Guna2ComboBox();
             this.lblLastName = new Guna.UI2.WinForms.Guna2HtmlLabel();
@@ -50,6 +51,7 @@
             // guna2Panel2
             // 
             this.guna2Panel2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(6)))), ((int)(((byte)(30)))), ((int)(((byte)(54)))));
+            this.guna2Panel2.Controls.Add(this.btnRegister);
             this.guna2Panel2.Controls.Add(this.lblYearLevel);
             this.guna2Panel2.Controls.Add(this.cmbYearLevel);
             this.guna2Panel2.Controls.Add(this.lblLastName);
@@ -67,13 +69,30 @@
             this.guna2Panel2.Size = new System.Drawing.Size(1009, 313);
             this.guna2Panel2.TabIndex = 4;
             // 
+            // btnRegister
+            // 
+            this.btnRegister.DisabledState.BorderColor = System.Drawing.Color.DarkGray;
+            this.btnRegister.DisabledState.CustomBorderColor = System.Drawing.Color.DarkGray;
+            this.btnRegister.DisabledState.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(169)))), ((int)(((byte)(169)))), ((int)(((byte)(169)))));
+            this.btnRegister.DisabledState.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(141)))), ((int)(((byte)(141)))));
+            this.btnRegister.FillColor = System.Drawing.Color.White;
+            this.btnRegister.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Bold);
+            this.btnRegister.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(6)))), ((int)(((byte)(30)))), ((int)(((byte)(54)))));
+            this.btnRegister.ImageSize = new System.Drawing.Size(40, 40);
+            this.btnRegister.Location = new System.Drawing.Point(380, 205);
+            this.btnRegister.Name = "btnRegister";
+            this.btnRegister.Size = new System.Drawing.Size(300, 45);
+            this.btnRegister.TabIndex = 5;
+            this.btnRegister.Text = "Register Student";
+            this.btnRegister.Click += new System.EventHandler(this.btnRegister_Click);
+            // 
             // lblYearLevel
             // 
             this.lblYearLevel.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.lblYearLevel.BackColor = System.Drawing.Color.Transparent;
             this.lblYearLevel.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Bold);
             this.lblYearLevel.ForeColor = System.Drawing.Color.White;
-            this.lblYearLevel.Location = new System.Drawing.Point(355, 192);
+            this.lblYearLevel.Location = new System.Drawing.Point(355, 163);
             this.lblYearLevel.Name = "lblYearLevel";
             this.lblYearLevel.Size = new System.Drawing.Size(135, 31);
             this.lblYearLevel.TabIndex = 10;
@@ -99,7 +118,7 @@
             "7th Year",
             "8th Year",
             "9th Year"});
-            this.cmbYearLevel.Location = new System.Drawing.Point(546, 192);
+            this.cmbYearLevel.Location = new System.Drawing.Point(546, 163);
             this.cmbYearLevel.Name = "cmbYearLevel";
             this.cmbYearLevel.Size = new System.Drawing.Size(140, 36);
             this.cmbYearLevel.TabIndex = 9;
@@ -110,7 +129,7 @@
             this.lblLastName.BackColor = System.Drawing.Color.Transparent;
             this.lblLastName.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Bold);
             this.lblLastName.ForeColor = System.Drawing.Color.White;
-            this.lblLastName.Location = new System.Drawing.Point(527, 140);
+            this.lblLastName.Location = new System.Drawing.Point(527, 111);
             this.lblLastName.Name = "lblLastName";
             this.lblLastName.Size = new System.Drawing.Size(134, 31);
             this.lblLastName.TabIndex = 8;
@@ -127,7 +146,7 @@
             this.txtLastName.FocusedState.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(94)))), ((int)(((byte)(148)))), ((int)(((byte)(255)))));
             this.txtLastName.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.txtLastName.HoverState.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(94)))), ((int)(((byte)(148)))), ((int)(((byte)(255)))));
-            this.txtLastName.Location = new System.Drawing.Point(717, 140);
+            this.txtLastName.Location = new System.Drawing.Point(717, 111);
             this.txtLastName.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.txtLastName.Name = "txtLastName";
             this.txtLastName.PlaceholderText = "";
@@ -141,7 +160,7 @@
             this.lblFirstName.BackColor = System.Drawing.Color.Transparent;
             this.lblFirstName.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Bold);
             this.lblFirstName.ForeColor = System.Drawing.Color.White;
-            this.lblFirstName.Location = new System.Drawing.Point(527, 92);
+            this.lblFirstName.Location = new System.Drawing.Point(527, 63);
             this.lblFirstName.Name = "lblFirstName";
             this.lblFirstName.Size = new System.Drawing.Size(138, 31);
             this.lblFirstName.TabIndex = 6;
@@ -158,7 +177,7 @@
             this.txtFirstName.FocusedState.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(94)))), ((int)(((byte)(148)))), ((int)(((byte)(255)))));
             this.txtFirstName.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.txtFirstName.HoverState.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(94)))), ((int)(((byte)(148)))), ((int)(((byte)(255)))));
-            this.txtFirstName.Location = new System.Drawing.Point(717, 92);
+            this.txtFirstName.Location = new System.Drawing.Point(717, 63);
             this.txtFirstName.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.txtFirstName.Name = "txtFirstName";
             this.txtFirstName.PlaceholderText = "";
@@ -172,7 +191,7 @@
             this.lblStudentId.BackColor = System.Drawing.Color.Transparent;
             this.lblStudentId.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Bold);
             this.lblStudentId.ForeColor = System.Drawing.Color.White;
-            this.lblStudentId.Location = new System.Drawing.Point(158, 140);
+            this.lblStudentId.Location = new System.Drawing.Point(158, 111);
             this.lblStudentId.Name = "lblStudentId";
             this.lblStudentId.Size = new System.Drawing.Size(131, 31);
             this.lblStudentId.TabIndex = 4;
@@ -189,7 +208,7 @@
             this.txtStudentId.FocusedState.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(94)))), ((int)(((byte)(148)))), ((int)(((byte)(255)))));
             this.txtStudentId.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.txtStudentId.HoverState.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(94)))), ((int)(((byte)(148)))), ((int)(((byte)(255)))));
-            this.txtStudentId.Location = new System.Drawing.Point(338, 140);
+            this.txtStudentId.Location = new System.Drawing.Point(338, 111);
             this.txtStudentId.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.txtStudentId.Name = "txtStudentId";
             this.txtStudentId.PlaceholderText = "";
@@ -203,7 +222,7 @@
             this.lblRFID.BackColor = System.Drawing.Color.Transparent;
             this.lblRFID.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Bold);
             this.lblRFID.ForeColor = System.Drawing.Color.White;
-            this.lblRFID.Location = new System.Drawing.Point(158, 92);
+            this.lblRFID.Location = new System.Drawing.Point(158, 63);
             this.lblRFID.Name = "lblRFID";
             this.lblRFID.Size = new System.Drawing.Size(90, 31);
             this.lblRFID.TabIndex = 2;
@@ -220,7 +239,7 @@
             this.txtRFID.FocusedState.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(94)))), ((int)(((byte)(148)))), ((int)(((byte)(255)))));
             this.txtRFID.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.txtRFID.HoverState.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(94)))), ((int)(((byte)(148)))), ((int)(((byte)(255)))));
-            this.txtRFID.Location = new System.Drawing.Point(297, 92);
+            this.txtRFID.Location = new System.Drawing.Point(297, 63);
             this.txtRFID.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.txtRFID.Name = "txtRFID";
             this.txtRFID.PlaceholderText = "";
@@ -234,7 +253,7 @@
             this.regis.BackColor = System.Drawing.Color.Transparent;
             this.regis.Font = new System.Drawing.Font("Bodoni MT", 18F, System.Drawing.FontStyle.Bold);
             this.regis.ForeColor = System.Drawing.Color.White;
-            this.regis.Location = new System.Drawing.Point(426, 46);
+            this.regis.Location = new System.Drawing.Point(426, 17);
             this.regis.Name = "regis";
             this.regis.Size = new System.Drawing.Size(207, 38);
             this.regis.TabIndex = 0;
@@ -246,9 +265,9 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(380, 29);
+            this.pictureBox1.Location = new System.Drawing.Point(426, 57);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(300, 300);
+            this.pictureBox1.Size = new System.Drawing.Size(226, 226);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBox1.TabIndex = 4;
             this.pictureBox1.TabStop = false;
@@ -303,5 +322,6 @@
         private Guna.UI2.WinForms.Guna2TextBox txtStudentId;
         private Guna.UI2.WinForms.Guna2HtmlLabel lblYearLevel;
         private Guna.UI2.WinForms.Guna2Button btnBack;
+        private Guna.UI2.WinForms.Guna2Button btnRegister;
     }
 }
