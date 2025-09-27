@@ -104,6 +104,7 @@
     <Compile Include="AttendanceTracker.Designer.cs">
       <DependentUpon>AttendanceTracker.cs</DependentUpon>
     </Compile>
+    <Compile Include="models\rfidControls.cs" />
     <Compile Include="models\student.cs" />
     <Compile Include="models\studentDS.cs" />
     <Compile Include="pages\Main.cs">
