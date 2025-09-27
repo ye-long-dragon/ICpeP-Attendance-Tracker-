@@ -113,12 +113,7 @@
             "1st Year",
             "2nd Year",
             "3rd Year",
-            "4th Year",
-            "5th Year",
-            "6th Year",
-            "7th Year",
-            "8th Year",
-            "9th Year"});
+            "4th Year"});
             this.cmbYearLevel.Location = new System.Drawing.Point(546, 163);
             this.cmbYearLevel.Name = "cmbYearLevel";
             this.cmbYearLevel.Size = new System.Drawing.Size(140, 36);

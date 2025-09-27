@@ -454,7 +454,7 @@ namespace ICpeP_Attendance_Tracker___Main.database
                     {
                         connection.Open();
                         using (var command = new NpgsqlCommand(
-                            "SELECT student_id, rfid, first_name, last_name, year_level " +
+                            "SELECT id, rfid, first_name, last_name, year_level " +
                             "FROM studentsinformation " +
                             "ORDER BY last_name, first_name",  // Alphabetical for UX
                             connection))
@@ -465,9 +465,9 @@ namespace ICpeP_Attendance_Tracker___Main.database
                             {
                                 students.Add(new student()
                                 {
-                                    student_id = reader.IsDBNull(reader.GetOrdinal("student_id"))
+                                    student_id = reader.IsDBNull(reader.GetOrdinal("id"))
                                                     ? 0
-                                                    : reader.GetInt32(reader.GetOrdinal("student_id")),
+                                                    : reader.GetInt32(reader.GetOrdinal("id")),
                                     rfid = reader.IsDBNull(reader.GetOrdinal("rfid"))
                                                     ? string.Empty
                                                     : reader.GetString(reader.GetOrdinal("rfid")),
@@ -483,6 +483,8 @@ namespace ICpeP_Attendance_Tracker___Main.database
                                 });
                             }
 
+                            MessageBox.Show("All Students Retrieved");
+
                         }
                     }
                         Debug.WriteLine($"✅ Retrieved {students.Count} students.");
@@ -491,11 +493,13 @@ namespace ICpeP_Attendance_Tracker___Main.database
                 catch (NpgsqlException ex)
                 {
                     Debug.WriteLine($"❌ Npgsql Error in ReadAllStudents: {ex.Message}");
+                    MessageBox.Show(ex.Message);
                     // e.g., If column is string in DB, error here – change GetInt32 to GetString and model to string
                 }
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"❌ Error in ReadAllStudents: {ex.Message}");
+                MessageBox.Show(ex.Message);
                 }
 
                 return students;

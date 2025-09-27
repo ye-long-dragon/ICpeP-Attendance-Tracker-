@@ -30,6 +30,7 @@ namespace ICpeP_Attendance_Tracker___Main
             // Add all controls to the panel/form but hide them initially
             mainPanel.Controls.Add(registerControl);
             mainPanel.Controls.Add(mainControl);
+            mainPanel.Controls.Add(studentListControl);  // NEW: Add the student list control
             // Add more: mainPanel.Controls.Add(settingsControl);
 
             // Configure docking and initial visibility
@@ -38,6 +39,10 @@ namespace ICpeP_Attendance_Tracker___Main
 
             mainControl.Dock = DockStyle.Fill;
             mainControl.Visible = false;
+
+            studentListControl.Dock = DockStyle.Fill;  // NEW: Set docking
+            studentListControl.Visible = false;        // NEW: Start hidden
+
 
             // Suspend layout to prevent flicker during init
             mainPanel.SuspendLayout();
@@ -85,8 +90,7 @@ namespace ICpeP_Attendance_Tracker___Main
         }
 
         public void ShowStudentList()
-        {
-            
+        {            
             ShowUserControl(studentListControl);
         }
 
