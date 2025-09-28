@@ -78,7 +78,7 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             student student = new student(rfid, studentid, firstName, lastName, yearLevel);
 
             
-                var existingStudent = dbconnect.ReadStudentById(studentid);
+                var existingStudent = dbconnect.ReadStudentById(rfid);
                 if (existingStudent != null)
                 {
                     MessageBox.Show($"Student ID {studentid} already exists. Use a different ID or update the existing record.",

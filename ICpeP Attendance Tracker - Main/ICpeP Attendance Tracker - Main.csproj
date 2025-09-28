@@ -105,7 +105,7 @@
       <DependentUpon>AttendanceTracker.cs</DependentUpon>
     </Compile>
     <Compile Include="models\student.cs" />
-    <Compile Include="models\studentDS.cs" />
+    <Compile Include="models\TimeAvail.cs" />
     <Compile Include="pages\Main.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -136,6 +136,18 @@
     <Compile Include="pages\studentList.Designer.cs">
       <DependentUpon>studentList.cs</DependentUpon>
     </Compile>
+    <Compile Include="pages\timeIn.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="pages\timeIn.Designer.cs">
+      <DependentUpon>timeIn.cs</DependentUpon>
+    </Compile>
+    <Compile Include="pages\timeOut.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="pages\timeOut.Designer.cs">
+      <DependentUpon>timeOut.cs</DependentUpon>
+    </Compile>
     <Compile Include="pages\trackAttendance.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -161,6 +173,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="pages\studentList.resx">
       <DependentUpon>studentList.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="pages\timeIn.resx">
+      <DependentUpon>timeIn.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="pages\timeOut.resx">
+      <DependentUpon>timeOut.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="pages\trackAttendance.resx">
       <DependentUpon>trackAttendance.cs</DependentUpon>

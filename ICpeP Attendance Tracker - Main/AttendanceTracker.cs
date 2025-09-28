@@ -12,6 +12,8 @@ namespace ICpeP_Attendance_Tracker___Main
         private UserControl mainControl = new pages.Main();  // Renamed for clarity (was 'main')
         private UserControl studentListControl = new pages.studentList();
         private UserControl trackAttendanceControl = new pages.trackAttendance();
+        private UserControl timeInControl = new pages.timeIn();
+        private UserControl timeOutControl = new pages.timeOut();
 
         // If you have more, add here e.g., private UserControl settingsControl = new pages.Settings();
 
@@ -33,6 +35,8 @@ namespace ICpeP_Attendance_Tracker___Main
             mainPanel.Controls.Add(mainControl);
             mainPanel.Controls.Add(studentListControl);  // NEW: Add the student list control
             mainPanel.Controls.Add(trackAttendanceControl);
+            mainControl.Controls.Add(timeInControl);
+            mainControl.Controls.Add(timeOutControl);
             // Add more: mainPanel.Controls.Add(settingsControl);
 
             // Configure docking and initial visibility
@@ -47,6 +51,12 @@ namespace ICpeP_Attendance_Tracker___Main
 
             trackAttendanceControl.Dock = DockStyle.Fill;
             trackAttendanceControl.Visible = false;
+
+            timeInControl.Dock = DockStyle.Fill;
+            timeInControl.Visible = false;
+
+            timeOutControl.Dock = DockStyle.Fill;
+            timeOutControl.Visible = false;
 
 
             // Suspend layout to prevent flicker during init
@@ -70,6 +80,11 @@ namespace ICpeP_Attendance_Tracker___Main
                 // If one-time use: currentControl.Dispose(); but avoid for navigation
                 //remove mainPanel.Controls.Remove(currentControl);
                 this.Controls.Remove(currentControl); // Optional: remove if not reusing
+            }
+
+            if (!mainPanel.Controls.Contains(newControl))
+            {
+                mainPanel.Controls.Add(newControl);
             }
 
             currentControl = newControl;
@@ -105,6 +120,16 @@ namespace ICpeP_Attendance_Tracker___Main
             ShowUserControl(trackAttendanceControl);
         }
 
+        public void ShowTimeInPage()
+        {
+            ShowUserControl(timeInControl);
+        }
+
+        public void ShowTimeOutPage()
+        {
+            ShowUserControl(timeOutControl);
+        }
+
         // Example: Hide all (e.g., for a "home" or logout state)
         public void HideCurrentControl()
         {
@@ -137,12 +162,12 @@ namespace ICpeP_Attendance_Tracker___Main
 
         private void btnTimeIn_Click(object sender, EventArgs e)
         {
-
+            ShowTimeInPage();
         }
 
         private void btnTimeOut_Click(object sender, EventArgs e)
         {
-
+            ShowTimeOutPage();
         }
 
         private void btnRegisterStudent_Click(object sender, EventArgs e)
@@ -164,5 +189,7 @@ namespace ICpeP_Attendance_Tracker___Main
         {
             ShowTrackAttendancePage();
         }
+
+
     }
 }

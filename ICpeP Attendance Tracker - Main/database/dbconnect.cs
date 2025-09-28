@@ -600,7 +600,7 @@ namespace ICpeP_Attendance_Tracker___Main.database
         }
 
         // READ: Get a single student by id
-        public static Dictionary<string, object> ReadStudentById(long studentId)
+        public static Dictionary<string, object> ReadStudentById(string rfid)
         {
             try
             {
@@ -610,7 +610,7 @@ namespace ICpeP_Attendance_Tracker___Main.database
                     using (var command = new NpgsqlCommand(
                         "SELECT id, rfid, first_name, last_name, year_level FROM studentsinformation WHERE id = @id", connection))
                     {
-                        command.Parameters.AddWithValue("@id", studentId);
+                        command.Parameters.AddWithValue("@rfid", rfid);
 
                         using (var reader = command.ExecuteReader())
                         {
@@ -631,7 +631,7 @@ namespace ICpeP_Attendance_Tracker___Main.database
                         }
                     }
                 }
-                Debug.WriteLine($"⚠️ No student found for ID {studentId}.");
+                Debug.WriteLine($"⚠️ No student found for ID {rfid}.");
                 return null;  // Or throw NotFoundException if preferred
             }
             catch (NpgsqlException ex)
@@ -846,6 +846,118 @@ namespace ICpeP_Attendance_Tracker___Main.database
             }
         }
 
+
+        //=========================================================================================
+        //==================================TIME IN/OUT============================================
+        //=========================================================================================
+        //CREATE: Insert a new time in record
+        public static bool CreateTimeAvail(TimeAvail timeAvail)
+        {
+            try
+            {
+
+                using (var connection = CreateShortLivedConnection())
+                {
+                    connection.Open();
+                    using (var command = new NpgsqlCommand(
+                        "INSERT INTO time_avail  (time_in, time_out) VALUES (@time_in, @time_out)", connection))
+                    {
+                        command.Parameters.AddWithValue("@time_in", timeAvail.timeIn);
+                        command.Parameters.AddWithValue("@time_out", timeAvail.timeOut); // Initially null
+
+                        int rowsAffected = command.ExecuteNonQuery();
+                        Debug.WriteLine($"Time In Created Successfully. Rows affected: {rowsAffected}");
+
+                    }
+                }
+                return true;
+            }
+            catch (NpgsqlException ex)
+            {
+                Debug.WriteLine($"❌ Npgsql Error in CreateTimeIn: {ex.Message}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error in CreateTimeIn: {ex.Message}");
+                return false;
+            }
+        }
+
+        //READ: Get all time in records
+        public static List<TimeAvail> ReadAllTimeIn()
+        {
+            var timeAvails = new List<TimeAvail>();
+            try
+            {
+                using (var connection = CreateShortLivedConnection())
+                {
+                    connection.Open();
+                    using (var command = new NpgsqlCommand(
+                        "SELECT id, time_in, time_out FROM time_avail ORDER BY time_in DESC", connection))
+                    {
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                timeAvails.Add(new TimeAvail(
+                                    reader.GetDateTime(reader.GetOrdinal("time_in")).ToString("yyyy-MM-dd"),
+                                    reader.GetDateTime(reader.GetOrdinal("time_in")).ToString("HH:mm"),
+                                    reader.IsDBNull(reader.GetOrdinal("time_out")) ? "N/A" : reader.GetDateTime(reader.GetOrdinal("time_out")).ToString("HH:mm")
+                                ));
+                            }
+                        }
+                    }
+                }
+                Debug.WriteLine($"✅ Retrieved {timeAvails.Count} time in records.");
+            }
+            catch (NpgsqlException ex)
+            {
+                Debug.WriteLine($"❌ Npgsql Error in ReadAllTimeIn: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error in ReadAllTimeIn: {ex.Message}");
+            }
+            return timeAvails;
+        }
+
+        //READ: Get a single time in record by date
+        public static DateTime ReadTimeInbyDate(string date)
+        {
+            try
+            {
+                using (var connection = CreateShortLivedConnection())
+                {
+                    connection.Open();
+                    using (var command = new NpgsqlCommand(
+                        "SELECT id, time_in, time_out FROM time_avail WHERE time_in::date = @date", connection))
+                    {
+                        command.Parameters.AddWithValue("@date", DateTime.Parse(date).Date);
+                        using (var reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                var timeIn = reader.GetDateTime(reader.GetOrdinal("time_in"));
+                                return timeIn;
+                            }
+                        }
+                    }
+                }
+                Debug.WriteLine($"⚠️ No time in record found for date {date}.");
+                return default;  // Or throw NotFoundException if preferred
+            }
+            catch (NpgsqlException ex)
+            {
+                Debug.WriteLine($"❌ Npgsql Error in ReadTimeInByDate: {ex.Message}");
+                return default;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error in ReadTimeInByDate: {ex.Message}");
+                return default;
+            }
+        }
 
 
 
