@@ -29,15 +29,15 @@
         private void InitializeComponent()
         {
             this.pnlDashboard = new Guna.UI2.WinForms.Guna2Panel();
+            this.btnHome = new Guna.UI2.WinForms.Guna2Button();
+            this.welcome = new Guna.UI2.WinForms.Guna2HtmlLabel();
             this.btnTrackAttendance = new Guna.UI2.WinForms.Guna2Button();
             this.btnTimeOut = new Guna.UI2.WinForms.Guna2Button();
             this.btnTimeIn = new Guna.UI2.WinForms.Guna2Button();
             this.btnStudentList = new Guna.UI2.WinForms.Guna2Button();
             this.btnRegisterStudent = new Guna.UI2.WinForms.Guna2Button();
-            this.mainPanel = new System.Windows.Forms.Panel();
-            this.welcome = new Guna.UI2.WinForms.Guna2HtmlLabel();
-            this.btnHome = new Guna.UI2.WinForms.Guna2Button();
             this.guna2PictureBox1 = new Guna.UI2.WinForms.Guna2PictureBox();
+            this.mainPanel = new System.Windows.Forms.Panel();
             this.pnlDashboard.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.guna2PictureBox1)).BeginInit();
             this.SuspendLayout();
@@ -59,6 +59,36 @@
             this.pnlDashboard.Size = new System.Drawing.Size(273, 673);
             this.pnlDashboard.TabIndex = 1;
             // 
+            // btnHome
+            // 
+            this.btnHome.DisabledState.BorderColor = System.Drawing.Color.DarkGray;
+            this.btnHome.DisabledState.CustomBorderColor = System.Drawing.Color.DarkGray;
+            this.btnHome.DisabledState.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(169)))), ((int)(((byte)(169)))), ((int)(((byte)(169)))));
+            this.btnHome.DisabledState.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(141)))), ((int)(((byte)(141)))));
+            this.btnHome.FillColor = System.Drawing.Color.White;
+            this.btnHome.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Bold);
+            this.btnHome.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(6)))), ((int)(((byte)(30)))), ((int)(((byte)(54)))));
+            this.btnHome.Location = new System.Drawing.Point(0, 239);
+            this.btnHome.Name = "btnHome";
+            this.btnHome.Size = new System.Drawing.Size(273, 45);
+            this.btnHome.TabIndex = 8;
+            this.btnHome.Text = "Home Page";
+            this.btnHome.Click += new System.EventHandler(this.btnHome_Click);
+            // 
+            // welcome
+            // 
+            this.welcome.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.welcome.BackColor = System.Drawing.Color.Transparent;
+            this.welcome.Font = new System.Drawing.Font("Bodoni MT", 14F, System.Drawing.FontStyle.Bold);
+            this.welcome.ForeColor = System.Drawing.Color.White;
+            this.welcome.Location = new System.Drawing.Point(12, 149);
+            this.welcome.Margin = new System.Windows.Forms.Padding(0);
+            this.welcome.Name = "welcome";
+            this.welcome.Size = new System.Drawing.Size(252, 29);
+            this.welcome.TabIndex = 7;
+            this.welcome.Text = "ICpeP Attendance Tracker";
+            this.welcome.TextAlignment = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
             // btnTrackAttendance
             // 
             this.btnTrackAttendance.DisabledState.BorderColor = System.Drawing.Color.DarkGray;
@@ -73,6 +103,7 @@
             this.btnTrackAttendance.Size = new System.Drawing.Size(273, 45);
             this.btnTrackAttendance.TabIndex = 5;
             this.btnTrackAttendance.Text = "Track Attendance";
+            this.btnTrackAttendance.Click += new System.EventHandler(this.btnTrackAttendance_Click);
             // 
             // btnTimeOut
             // 
@@ -138,44 +169,6 @@
             this.btnRegisterStudent.Text = "Register Student";
             this.btnRegisterStudent.Click += new System.EventHandler(this.btnRegisterStudent_Click);
             // 
-            // mainPanel
-            // 
-            this.mainPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.mainPanel.Location = new System.Drawing.Point(273, 0);
-            this.mainPanel.Name = "mainPanel";
-            this.mainPanel.Size = new System.Drawing.Size(989, 673);
-            this.mainPanel.TabIndex = 2;
-            // 
-            // welcome
-            // 
-            this.welcome.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.welcome.BackColor = System.Drawing.Color.Transparent;
-            this.welcome.Font = new System.Drawing.Font("Bodoni MT", 14F, System.Drawing.FontStyle.Bold);
-            this.welcome.ForeColor = System.Drawing.Color.White;
-            this.welcome.Location = new System.Drawing.Point(12, 149);
-            this.welcome.Margin = new System.Windows.Forms.Padding(0);
-            this.welcome.Name = "welcome";
-            this.welcome.Size = new System.Drawing.Size(252, 29);
-            this.welcome.TabIndex = 7;
-            this.welcome.Text = "ICpeP Attendance Tracker";
-            this.welcome.TextAlignment = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // btnHome
-            // 
-            this.btnHome.DisabledState.BorderColor = System.Drawing.Color.DarkGray;
-            this.btnHome.DisabledState.CustomBorderColor = System.Drawing.Color.DarkGray;
-            this.btnHome.DisabledState.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(169)))), ((int)(((byte)(169)))), ((int)(((byte)(169)))));
-            this.btnHome.DisabledState.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(141)))), ((int)(((byte)(141)))), ((int)(((byte)(141)))));
-            this.btnHome.FillColor = System.Drawing.Color.White;
-            this.btnHome.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Bold);
-            this.btnHome.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(6)))), ((int)(((byte)(30)))), ((int)(((byte)(54)))));
-            this.btnHome.Location = new System.Drawing.Point(0, 239);
-            this.btnHome.Name = "btnHome";
-            this.btnHome.Size = new System.Drawing.Size(273, 45);
-            this.btnHome.TabIndex = 8;
-            this.btnHome.Text = "Home Page";
-            this.btnHome.Click += new System.EventHandler(this.btnHome_Click);
-            // 
             // guna2PictureBox1
             // 
             this.guna2PictureBox1.Image = global::ICpeP_Attendance_Tracker___Main.Properties.Resources.logo;
@@ -186,6 +179,14 @@
             this.guna2PictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.guna2PictureBox1.TabIndex = 0;
             this.guna2PictureBox1.TabStop = false;
+            // 
+            // mainPanel
+            // 
+            this.mainPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.mainPanel.Location = new System.Drawing.Point(273, 0);
+            this.mainPanel.Name = "mainPanel";
+            this.mainPanel.Size = new System.Drawing.Size(989, 673);
+            this.mainPanel.TabIndex = 2;
             // 
             // AttendanceTracker
             // 

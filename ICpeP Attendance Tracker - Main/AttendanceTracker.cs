@@ -11,6 +11,7 @@ namespace ICpeP_Attendance_Tracker___Main
         private UserControl registerControl = new pages.register();
         private UserControl mainControl = new pages.Main();  // Renamed for clarity (was 'main')
         private UserControl studentListControl = new pages.studentList();
+        private UserControl trackAttendanceControl = new pages.trackAttendance();
 
         // If you have more, add here e.g., private UserControl settingsControl = new pages.Settings();
 
@@ -31,6 +32,7 @@ namespace ICpeP_Attendance_Tracker___Main
             mainPanel.Controls.Add(registerControl);
             mainPanel.Controls.Add(mainControl);
             mainPanel.Controls.Add(studentListControl);  // NEW: Add the student list control
+            mainPanel.Controls.Add(trackAttendanceControl);
             // Add more: mainPanel.Controls.Add(settingsControl);
 
             // Configure docking and initial visibility
@@ -42,6 +44,9 @@ namespace ICpeP_Attendance_Tracker___Main
 
             studentListControl.Dock = DockStyle.Fill;  // NEW: Set docking
             studentListControl.Visible = false;        // NEW: Start hidden
+
+            trackAttendanceControl.Dock = DockStyle.Fill;
+            trackAttendanceControl.Visible = false;
 
 
             // Suspend layout to prevent flicker during init
@@ -92,6 +97,12 @@ namespace ICpeP_Attendance_Tracker___Main
         public void ShowStudentList()
         {            
             ShowUserControl(studentListControl);
+        }
+
+        public void ShowTrackAttendancePage()
+        {
+            
+            ShowUserControl(trackAttendanceControl);
         }
 
         // Example: Hide all (e.g., for a "home" or logout state)
@@ -147,6 +158,11 @@ namespace ICpeP_Attendance_Tracker___Main
         private void btnStudentList_Click(object sender, EventArgs e)
         {
             ShowStudentList();
+        }
+
+        private void btnTrackAttendance_Click(object sender, EventArgs e)
+        {
+            ShowTrackAttendancePage();
         }
     }
 }

@@ -4,7 +4,8 @@ using System.Diagnostics;
 using Npgsql;
 using System.Collections.Generic;
 using ICpeP_Attendance_Tracker___Main.models;
-using System.Windows.Forms;  // For returning lists of data
+using System.Windows.Forms;
+using System.Threading.Tasks;  // For returning lists of data
 
 namespace ICpeP_Attendance_Tracker___Main.database
 {
@@ -185,6 +186,9 @@ namespace ICpeP_Attendance_Tracker___Main.database
             }
         }
 
+        //CREATE: Async version of CreateAttendance
+        
+
         // READ: Get all attendance records (with optional filters)
         public static List<Dictionary<string, object>> ReadAllAttendance(int? studentId = null, DateTime? fromDate = null, DateTime? toDate = null)
         {
@@ -266,6 +270,9 @@ namespace ICpeP_Attendance_Tracker___Main.database
             return results;
         }
 
+        //READ: Async version of ReadAllAttendance
+        
+
         // READ: Get a single attendance record by id
         public static Dictionary<string, object> ReadAttendanceById(long attendanceId)
         {
@@ -329,6 +336,9 @@ namespace ICpeP_Attendance_Tracker___Main.database
             }
         }
 
+        //READ: Async version of ReadAttendanceById 
+        
+
         // UPDATE: Update an existing attendance record by id (using 'student' object for fields)
         public static bool UpdateAttendance(long attendanceId, student student)
         {
@@ -370,6 +380,9 @@ namespace ICpeP_Attendance_Tracker___Main.database
             }
         }
 
+        //UPDATE: Async version of UpdateAttendance
+       
+
         // DELETE: Delete an attendance record by id
         public static bool DeleteAttendance(long attendanceId)
         {
@@ -400,6 +413,9 @@ namespace ICpeP_Attendance_Tracker___Main.database
                 return false;
             }
         }
+
+        //CREATE: Async version of DeleteAttendance
+        
 
 
         //=============================================================================================
@@ -443,71 +459,148 @@ namespace ICpeP_Attendance_Tracker___Main.database
             }
         }
 
+        //CREATE: Async version of RegisterStudent
+        public static async Task<bool> CreateStudentAsync(student student)
+        {
+            try
+            {
+                using (var connection = CreateShortLivedConnection())
+                {
+                    await connection.OpenAsync();
+                    using (var command = new NpgsqlCommand(
+                        @"INSERT INTO studentsinformation (id, rfid, first_name, last_name, year_level) 
+                  VALUES (@student_id, @rfid, @first_name, @last_name, @year_level)", connection))
+                    {
+                        command.Parameters.AddWithValue("@student_id", student.student_id);
+                        command.Parameters.AddWithValue("@rfid", string.IsNullOrWhiteSpace(student.rfid) ? (object)DBNull.Value : student.rfid);
+                        command.Parameters.AddWithValue("@first_name", string.IsNullOrWhiteSpace(student.first_name) ? (object)DBNull.Value : student.first_name);
+                        command.Parameters.AddWithValue("@last_name", string.IsNullOrWhiteSpace(student.last_name) ? (object)DBNull.Value : student.last_name);
+                        command.Parameters.AddWithValue("@year_level", student.year_level > 0 ? (object)student.year_level : DBNull.Value);
+
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
+                        Debug.WriteLine($"✅ Student created successfully. Rows affected: {rowsAffected}");
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (NpgsqlException ex)
+            {
+                Debug.WriteLine($"❌ Npgsql Error in CreateStudent: {ex.Message}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error in CreateStudent: {ex.Message}");
+                return false;
+            }
+        }
+
 
         public static List<student> ReadAllStudents()  // Return List<Student> (typed)
-            {
-                var students = new List<student>();
+        {
+            var students = new List<student>();
 
-                try
+            try
+            {
+                using (var connection = CreateShortLivedConnection())
                 {
-                    using (var connection = CreateShortLivedConnection())
+                    connection.Open();
+                    using (var command = new NpgsqlCommand(
+                        "SELECT id, rfid, first_name, last_name, year_level " +
+                        "FROM studentsinformation " +
+                        "ORDER BY last_name, first_name",  // Alphabetical for UX
+                        connection))
                     {
-                        connection.Open();
-                        using (var command = new NpgsqlCommand(
-                            "SELECT id, rfid, first_name, last_name, year_level " +
-                            "FROM studentsinformation " +
-                            "ORDER BY last_name, first_name",  // Alphabetical for UX
-                            connection))
+                        using (var reader = command.ExecuteReader())
                         {
-                            using (var reader = command.ExecuteReader())
-                            {
                             while (reader.Read())
                             {
                                 students.Add(new student()
                                 {
                                     student_id = reader.IsDBNull(reader.GetOrdinal("id"))
-                                                    ? 0
-                                                    : reader.GetInt32(reader.GetOrdinal("id")),
+                                        ? 0L  // Use 0L for long
+                                        : reader.GetInt64(reader.GetOrdinal("id")),  // Changed to GetInt64
                                     rfid = reader.IsDBNull(reader.GetOrdinal("rfid"))
-                                                    ? string.Empty
-                                                    : reader.GetString(reader.GetOrdinal("rfid")),
+                                        ? string.Empty
+                                        : reader.GetString(reader.GetOrdinal("rfid")),
                                     first_name = reader.IsDBNull(reader.GetOrdinal("first_name"))
-                                                    ? string.Empty
-                                                    : reader.GetString(reader.GetOrdinal("first_name")),
+                                        ? string.Empty
+                                        : reader.GetString(reader.GetOrdinal("first_name")),
                                     last_name = reader.IsDBNull(reader.GetOrdinal("last_name"))
-                                                    ? string.Empty
-                                                    : reader.GetString(reader.GetOrdinal("last_name")),
+                                        ? string.Empty
+                                        : reader.GetString(reader.GetOrdinal("last_name")),
                                     year_level = reader.IsDBNull(reader.GetOrdinal("year_level"))
-                                                    ? 0
-                                                    : reader.GetInt32(reader.GetOrdinal("year_level"))
+                                        ? 0
+                                        : reader.GetInt32(reader.GetOrdinal("year_level"))  // Keep Int32 if small; change to GetInt64 if needed
                                 });
                             }
-
-                            MessageBox.Show("All Students Retrieved");
-
                         }
+                        MessageBox.Show("All Students Retrieved");  // Consider moving this outside or checking if students.Count > 0
                     }
+                }
+                Debug.WriteLine($"✅ Retrieved {students.Count} students.");
+            }
+            catch (NpgsqlException ex)
+            {
+                Debug.WriteLine($"❌ Npgsql Error in ReadAllStudents: {ex.Message}");
+                MessageBox.Show($"Database error: {ex.Message}");  // More user-friendly
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error in ReadAllStudents: {ex.Message}");
+                MessageBox.Show($"Unexpected error: {ex.Message}");
+            }
+
+            return students;
+        }
+
+        //READ: Async version of ReadAllStudents
+        public static async Task<List<student>> ReadAllStudentsAsync()
+        {
+            var students = new List<student>();
+
+            try
+            {
+                using (var connection = CreateShortLivedConnection())
+                {
+                    await connection.OpenAsync();
+                    using (var command = new NpgsqlCommand(
+                        @"SELECT id, rfid, first_name, last_name, year_level 
+                  FROM studentsinformation 
+                  ORDER BY last_name, first_name", connection))
+                    {
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                students.Add(new student()
+                                {
+                                    student_id = reader.IsDBNull(reader.GetOrdinal("id")) ? 0L : reader.GetInt64(reader.GetOrdinal("id")),
+                                    rfid = reader.IsDBNull(reader.GetOrdinal("rfid")) ? string.Empty : reader.GetString(reader.GetOrdinal("rfid")),
+                                    first_name = reader.IsDBNull(reader.GetOrdinal("first_name")) ? string.Empty : reader.GetString(reader.GetOrdinal("first_name")),
+                                    last_name = reader.IsDBNull(reader.GetOrdinal("last_name")) ? string.Empty : reader.GetString(reader.GetOrdinal("last_name")),
+                                    year_level = reader.IsDBNull(reader.GetOrdinal("year_level")) ? 0 : reader.GetInt32(reader.GetOrdinal("year_level"))
+                                });
+                            }
+                        }
                         Debug.WriteLine($"✅ Retrieved {students.Count} students.");
                     }
                 }
-                catch (NpgsqlException ex)
-                {
-                    Debug.WriteLine($"❌ Npgsql Error in ReadAllStudents: {ex.Message}");
-                    MessageBox.Show(ex.Message);
-                    // e.g., If column is string in DB, error here – change GetInt32 to GetString and model to string
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"❌ Error in ReadAllStudents: {ex.Message}");
-                MessageBox.Show(ex.Message);
-                }
-
-                return students;
+            }
+            catch (NpgsqlException ex)
+            {
+                Debug.WriteLine($"❌ Npgsql Error in ReadAllStudents: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error in ReadAllStudents: {ex.Message}");
             }
 
+            return students;
+        }
 
-    // READ: Get a single student by id
-    public static Dictionary<string, object> ReadStudentById(long studentId)
+        // READ: Get a single student by id
+        public static Dictionary<string, object> ReadStudentById(long studentId)
         {
             try
             {
@@ -540,6 +633,54 @@ namespace ICpeP_Attendance_Tracker___Main.database
                 }
                 Debug.WriteLine($"⚠️ No student found for ID {studentId}.");
                 return null;  // Or throw NotFoundException if preferred
+            }
+            catch (NpgsqlException ex)
+            {
+                Debug.WriteLine($"❌ Npgsql Error in ReadStudentById: {ex.Message}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error in ReadStudentById: {ex.Message}");
+                return null;
+            }
+        }
+
+        //READ: Async version of ReadStudentById
+        public static async Task<student> ReadStudentByIdAsync(long studentId)
+        {
+            try
+            {
+                using (var connection = CreateShortLivedConnection())
+                {
+                    await connection.OpenAsync();
+                    using (var command = new NpgsqlCommand(
+                        @"SELECT id, rfid, first_name, last_name, year_level 
+                  FROM studentsinformation WHERE id = @id", connection))
+                    {
+                        command.Parameters.AddWithValue("@id", studentId);
+
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                var student = new student()
+                                {
+                                    student_id = reader.GetInt64(reader.GetOrdinal("id")),
+                                    rfid = reader.IsDBNull(reader.GetOrdinal("rfid")) ? string.Empty : reader.GetString(reader.GetOrdinal("rfid")),
+                                    first_name = reader.IsDBNull(reader.GetOrdinal("first_name")) ? string.Empty : reader.GetString(reader.GetOrdinal("first_name")),
+                                    last_name = reader.IsDBNull(reader.GetOrdinal("last_name")) ? string.Empty : reader.GetString(reader.GetOrdinal("last_name")),
+                                    year_level = reader.IsDBNull(reader.GetOrdinal("year_level")) ? 0 : reader.GetInt32(reader.GetOrdinal("year_level"))
+                                };
+
+                                Debug.WriteLine($"✅ Retrieved student ID {studentId}.");
+                                return student;
+                            }
+                        }
+                    }
+                }
+                Debug.WriteLine($"⚠️ No student found for ID {studentId}.");
+                return null;
             }
             catch (NpgsqlException ex)
             {
@@ -606,6 +747,43 @@ namespace ICpeP_Attendance_Tracker___Main.database
             }
         }
 
+        //UPDATE: Async version of UpdateStudent
+        public static async Task<bool> UpdateStudentAsync(student student)
+        {
+            try
+            {
+                using (var connection = CreateShortLivedConnection())
+                {
+                    await connection.OpenAsync();
+                    using (var command = new NpgsqlCommand(
+                        @"UPDATE studentsinformation 
+                  SET rfid = @rfid, first_name = @first_name, last_name = @last_name, year_level = @year_level 
+                  WHERE id = @id", connection))
+                    {
+                        command.Parameters.AddWithValue("@id", student.student_id);
+                        command.Parameters.AddWithValue("@rfid", string.IsNullOrWhiteSpace(student.rfid) ? (object)DBNull.Value : student.rfid);
+                        command.Parameters.AddWithValue("@first_name", string.IsNullOrWhiteSpace(student.first_name) ? (object)DBNull.Value : student.first_name);
+                        command.Parameters.AddWithValue("@last_name", string.IsNullOrWhiteSpace(student.last_name) ? (object)DBNull.Value : student.last_name);
+                        command.Parameters.AddWithValue("@year_level", student.year_level > 0 ? (object)student.year_level : DBNull.Value);
+
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
+                        Debug.WriteLine($"✅ Student updated successfully. Rows affected: {rowsAffected}");
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (NpgsqlException ex)
+            {
+                Debug.WriteLine($"❌ Npgsql Error in UpdateStudent: {ex.Message}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error in UpdateStudent: {ex.Message}");
+                return false;
+            }
+        }
+
         // DELETE: Delete a student by id
         public static bool DeleteStudent(long studentId)
         {
@@ -620,6 +798,37 @@ namespace ICpeP_Attendance_Tracker___Main.database
                         command.Parameters.AddWithValue("@id", studentId);
 
                         int rowsAffected = command.ExecuteNonQuery();
+                        Debug.WriteLine($"✅ Student deleted successfully. Rows affected: {rowsAffected}");
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (NpgsqlException ex)
+            {
+                Debug.WriteLine($"❌ Npgsql Error in DeleteStudent: {ex.Message}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error in DeleteStudent: {ex.Message}");
+                return false;
+            }
+        }
+
+        //DELETE: Async version of DeleteStudent
+        public static async Task<bool> DeleteStudentAsync(long studentId)
+        {
+            try
+            {
+                using (var connection = CreateShortLivedConnection())
+                {
+                    await connection.OpenAsync();
+                    using (var command = new NpgsqlCommand(
+                        "DELETE FROM studentsinformation WHERE id = @id", connection))
+                    {
+                        command.Parameters.AddWithValue("@id", studentId);
+
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
                         Debug.WriteLine($"✅ Student deleted successfully. Rows affected: {rowsAffected}");
                         return rowsAffected > 0;
                     }

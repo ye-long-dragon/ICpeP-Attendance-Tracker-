@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ICpeP_Attendance_Tracker___Main.models
 {
-    public class studentDS
+    internal class TimeAvail
     {
     }
 }

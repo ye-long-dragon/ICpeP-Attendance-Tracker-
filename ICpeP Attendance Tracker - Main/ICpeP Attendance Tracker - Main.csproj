@@ -104,7 +104,6 @@
     <Compile Include="AttendanceTracker.Designer.cs">
       <DependentUpon>AttendanceTracker.cs</DependentUpon>
     </Compile>
-    <Compile Include="models\rfidControls.cs" />
     <Compile Include="models\student.cs" />
     <Compile Include="models\studentDS.cs" />
     <Compile Include="pages\Main.cs">
@@ -112,6 +111,18 @@
     </Compile>
     <Compile Include="pages\Main.Designer.cs">
       <DependentUpon>Main.cs</DependentUpon>
+    </Compile>
+    <Compile Include="pages\popups\AddTimeIn.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="pages\popups\AddTimeIn.Designer.cs">
+      <DependentUpon>AddTimeIn.cs</DependentUpon>
+    </Compile>
+    <Compile Include="pages\popups\EditStudentForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="pages\popups\EditStudentForm.Designer.cs">
+      <DependentUpon>EditStudentForm.cs</DependentUpon>
     </Compile>
     <Compile Include="pages\register.cs">
       <SubType>UserControl</SubType>
@@ -125,6 +136,12 @@
     <Compile Include="pages\studentList.Designer.cs">
       <DependentUpon>studentList.cs</DependentUpon>
     </Compile>
+    <Compile Include="pages\trackAttendance.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="pages\trackAttendance.Designer.cs">
+      <DependentUpon>trackAttendance.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="AttendanceTracker.resx">
@@ -133,11 +150,20 @@
     <EmbeddedResource Include="pages\Main.resx">
       <DependentUpon>Main.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="pages\popups\AddTimeIn.resx">
+      <DependentUpon>AddTimeIn.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="pages\popups\EditStudentForm.resx">
+      <DependentUpon>EditStudentForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="pages\register.resx">
       <DependentUpon>register.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="pages\studentList.resx">
       <DependentUpon>studentList.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="pages\trackAttendance.resx">
+      <DependentUpon>trackAttendance.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
