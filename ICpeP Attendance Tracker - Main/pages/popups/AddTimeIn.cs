@@ -48,16 +48,7 @@ namespace ICpeP_Attendance_Tracker___Main.pages.popups
             DateTime fullTimeOut = DateTime.Parse(date.ToString("yyyy-MM-dd") + " " + timeOut);
             //send to database
             TimeAvail setTime = new TimeAvail(date.ToString("yyyy-MM-dd"), timeIn, timeOut);
-            var sendTime = dbconnect.CreateTimeAvail(setTime);
-            if (sendTime)
-            {
-                MessageBox.Show("Time Added Successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                this.Close();
-            }
-            else
-            {
-                MessageBox.Show("Failed to add time. Please try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            
 
 
         }

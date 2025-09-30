@@ -1,15 +1,10 @@
-﻿using ICpeP_Attendance_Tracker___Main.database;
-using ICpeP_Attendance_Tracker___Main.models;
+﻿using ICpeP_Attendance_Tracker___Main.models;
 using ICpeP_Attendance_Tracker___Main.pages.popups;
-using Npgsql;
+using ICpeP_Attendance_Tracker___Main.database;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -21,74 +16,67 @@ namespace ICpeP_Attendance_Tracker___Main.pages
         {
             InitializeComponent();
             SetupButtonEvents();
-            // Load async data after control is loaded (use Load event for better timing)
-            this.Load += StudentList_Load;  // NEW: Async load on form/control load
+            this.Load += StudentList_Load;  // Async load on control load
         }
 
-        private async void StudentList_Load(object sender, EventArgs e)  // NEW: Async load event
+        private async void StudentList_Load(object sender, EventArgs e)
         {
             await LoadStudentsAsync();
         }
 
         private void SetupButtonEvents()
         {
-            studentListView.CellContentClick += StudentListView_CellContentClick;  // Handle button clicks
+            studentListView.CellContentClick += StudentListView_CellContentClick;
         }
 
-        // ASYNC: Load students (non-blocking)
+        // Async load students from Supabase REST API
         public async Task LoadStudentsAsync()
         {
             try
             {
-                // UI Feedback: Show loading
                 studentListView.Enabled = false;
                 Cursor.Current = Cursors.WaitCursor;
 
                 DataTable dataTable = new DataTable();
-
-                // Add only data columns (no button columns here)
                 dataTable.Columns.Add("RFID", typeof(string));
                 dataTable.Columns.Add("Student ID", typeof(long));
                 dataTable.Columns.Add("First Name", typeof(string));
                 dataTable.Columns.Add("Last Name", typeof(string));
                 dataTable.Columns.Add("Year Level", typeof(int));
 
-                // ASYNC: Fetch from DB
                 List<student> students = await dbconnect.ReadAllStudentsAsync();
-                foreach (student stu in students)  // Renamed 'student' to 'stu' to avoid keyword confusion
+
+                foreach (student stu in students)
                 {
                     DataRow row = dataTable.NewRow();
-                    row["RFID"] = stu.rfid ?? string.Empty;  // Use null-coalescing for safety
+                    row["RFID"] = stu.rfid ?? string.Empty;
                     row["Student ID"] = stu.student_id;
                     row["First Name"] = stu.first_name ?? string.Empty;
                     row["Last Name"] = stu.last_name ?? string.Empty;
                     row["Year Level"] = stu.year_level;
-
                     dataTable.Rows.Add(row);
                 }
 
-                // Bind data to DataGridView
                 studentListView.DataSource = dataTable;
-
-                // Configure DataGridView for better UX
-                studentListView.ReadOnly = true;  // Prevent accidental edits (allow via buttons)
+                studentListView.ReadOnly = true;
                 studentListView.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
                 studentListView.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
-                // Add button columns AFTER binding (they don't bind to data)
+                // Add Edit button column if not present
                 if (studentListView.Columns["Update"] == null)
                 {
                     var updateColumn = new DataGridViewButtonColumn
                     {
                         Name = "Update",
-                        HeaderText = "Edit",  // More intuitive text
+                        HeaderText = "Edit",
                         Text = "Edit",
                         UseColumnTextForButtonValue = true,
                         Width = 80
                     };
-                    studentListView.Columns.Insert(5, updateColumn);  // Insert after "Year Level" (index 4, so 5)
+                    studentListView.Columns.Insert(5, updateColumn);
                 }
 
+                // Add Delete button column if not present
                 if (studentListView.Columns["Delete"] == null)
                 {
                     var deleteColumn = new DataGridViewButtonColumn
@@ -99,11 +87,8 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                         UseColumnTextForButtonValue = true,
                         Width = 80
                     };
-                    studentListView.Columns.Insert(6, deleteColumn);  // Insert after Update (index 5, so 6)
+                    studentListView.Columns.Insert(6, deleteColumn);
                 }
-
-                // Optional: Hide "Student ID" if not needed for display (but keep for internal use)
-                // studentListView.Columns["Student ID"].Visible = false;
             }
             catch (Exception ex)
             {
@@ -111,21 +96,19 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             }
             finally
             {
-                // UI Feedback: Restore
                 studentListView.Enabled = true;
                 Cursor.Current = Cursors.Default;
             }
         }
 
-        // ASYNC: Handle cell clicks (non-blocking for DB ops)
+        // Async handler for Edit/Delete button clicks
         private async void StudentListView_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;  // Ignore headers/empty
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
 
             DataGridView dgv = (DataGridView)sender;
-            long studentId = (long)dgv.Rows[e.RowIndex].Cells["Student ID"].Value;  // Get ID from row
+            long studentId = (long)dgv.Rows[e.RowIndex].Cells["Student ID"].Value;
 
-            // UI Feedback: Disable during op
             dgv.Enabled = false;
             Cursor.Current = Cursors.WaitCursor;
 
@@ -133,19 +116,23 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             {
                 if (dgv.Columns[e.ColumnIndex].Name == "Delete")
                 {
-                    // Confirm deletion (sync, as it's quick)
                     var result = MessageBox.Show($"Delete student with ID {studentId}?\nThis cannot be undone.", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                     if (result == DialogResult.Yes)
                     {
-                        // ASYNC: Delete from DB
-                        await dbconnect.DeleteStudentAsync(studentId);
-                        MessageBox.Show("Student deleted successfully.");
-                        await LoadStudentsAsync();  // ASYNC: Refresh grid
+                        bool deleted = await dbconnect.DeleteStudentAsync(studentId);
+                        if (deleted)
+                        {
+                            MessageBox.Show("Student deleted successfully.");
+                            await LoadStudentsAsync();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Failed to delete student.");
+                        }
                     }
                 }
                 else if (dgv.Columns[e.ColumnIndex].Name == "Update")
                 {
-                    // Get current student data from row (or fetch fresh from DB for accuracy)
                     string rfid = dgv.Rows[e.RowIndex].Cells["RFID"].Value?.ToString() ?? string.Empty;
                     string firstName = dgv.Rows[e.RowIndex].Cells["First Name"].Value?.ToString() ?? string.Empty;
                     string lastName = dgv.Rows[e.RowIndex].Cells["Last Name"].Value?.ToString() ?? string.Empty;
@@ -160,14 +147,19 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                         year_level = yearLevel
                     };
 
-                    // Sync: Open edit form (modal, blocks until closed)
                     var editForm = new EditStudentForm(currentStudent);
                     if (editForm.ShowDialog() == DialogResult.OK)
                     {
-                        // ASYNC: Save changes after form closes
-                        await dbconnect.UpdateStudentAsync(editForm.UpdatedStudent);
-                        MessageBox.Show("Student updated successfully.");
-                        await LoadStudentsAsync();  // ASYNC: Refresh grid
+                        bool updated = await dbconnect.UpdateStudentAsync(editForm.UpdatedStudent);
+                        if (updated)
+                        {
+                            MessageBox.Show("Student updated successfully.");
+                            await LoadStudentsAsync();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Failed to update student.");
+                        }
                     }
                 }
             }
@@ -177,7 +169,6 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             }
             finally
             {
-                // UI Feedback: Restore
                 dgv.Enabled = true;
                 Cursor.Current = Cursors.Default;
             }

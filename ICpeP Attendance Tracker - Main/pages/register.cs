@@ -1,5 +1,5 @@
-﻿using ICpeP_Attendance_Tracker___Main.database;
-using ICpeP_Attendance_Tracker___Main.models;
+﻿using ICpeP_Attendance_Tracker___Main.models;
+using ICpeP_Attendance_Tracker___Main.database;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -34,9 +34,10 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             }
         }
 
-        private void btnRegister_Click(object sender, EventArgs e)
+        // Make event handler async
+        private async void btnRegister_Click(object sender, EventArgs e)
         {
-            //check input
+            // Check input
             if (string.IsNullOrWhiteSpace(txtFirstName.Text))
             {
                 MessageBox.Show("Input First Name");
@@ -67,18 +68,24 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                 return;
             }
 
-
-
             firstName = txtFirstName.Text;
             lastName = txtLastName.Text;
-            studentid = long.Parse(txtStudentId.Text);
+
+            if (!long.TryParse(txtStudentId.Text, out studentid))
+            {
+                MessageBox.Show("Student ID must be a valid number");
+                return;
+            }
+
             rfid = txtRFID.Text;
             yearLevel = cmbYearLevel.SelectedIndex;
 
             student student = new student(rfid, studentid, firstName, lastName, yearLevel);
 
-            
-                var existingStudent = dbconnect.ReadStudentById(rfid);
+            try
+            {
+                // Check if student already exists by student ID (long)
+                var existingStudent = await dbconnect.ReadStudentByIdAsync(studentid);
                 if (existingStudent != null)
                 {
                     MessageBox.Show($"Student ID {studentid} already exists. Use a different ID or update the existing record.",
@@ -86,7 +93,10 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                     return;
                 }
 
-                    dbconnect.RegisterStudent(student);
+                // Register new student asynchronously
+                bool success = await dbconnect.CreateStudentAsync(student);
+                if (success)
+                {
                     MessageBox.Show($"Student '{firstName} {lastName}' (ID: {studentid}) registered successfully!",
                                   "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
@@ -95,13 +105,17 @@ namespace ICpeP_Attendance_Tracker___Main.pages
 
                     // Optional: Log success
                     Debug.WriteLine($"✅ Student registered: ID {studentid}");
-                
-           
-           
-
-
-        
-
+                }
+                else
+                {
+                    MessageBox.Show("Failed to register student. Please try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Debug.WriteLine($"❌ Exception in btnRegister_Click: {ex}");
+            }
         }
 
         // Helper: Clear form inputs
@@ -111,7 +125,7 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             txtStudentId?.Clear();
             txtFirstName?.Clear();
             txtLastName?.Clear();
-            cmbYearLevel.SelectedIndex=0;
+            cmbYearLevel.SelectedIndex = 0;
             txtStudentId?.Focus();  // Focus back to first field
         }
     }
