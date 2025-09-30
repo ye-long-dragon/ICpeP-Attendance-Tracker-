@@ -48,6 +48,7 @@ namespace ICpeP_Attendance_Tracker___Main.pages
 
                 foreach (student stu in students)
                 {
+                    MessageBox.Show(stu.first_name);
                     DataRow row = dataTable.NewRow();
                     row["RFID"] = stu.rfid ?? string.Empty;
                     row["Student ID"] = stu.student_id;

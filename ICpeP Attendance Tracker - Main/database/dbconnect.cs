@@ -260,25 +260,39 @@ namespace ICpeP_Attendance_Tracker___Main.database
         public static async Task<List<student>> ReadAllStudentsAsync()
         {
             var students = new List<student>();
+
             try
             {
-                var response = await httpClient.GetAsync("studentsinformation?order=last_name.asc,first_name.asc");
+                // Check the full URL formed
+                var requestUrl = "studentsinformation?order=last_name.asc,first_name.asc";
+                Debug.WriteLine($"Requesting URL: {httpClient.BaseAddress}{requestUrl}");
+
+                var response = await httpClient.GetAsync(requestUrl);
+
+                Debug.WriteLine($"Response Status Code: {response.StatusCode}");
+
+                var content = await response.Content.ReadAsStringAsync();
+                Debug.WriteLine($"Response Content: {content}");
+
                 if (response.IsSuccessStatusCode)
                 {
-                    var json = await response.Content.ReadAsStringAsync();
-                    students = JsonSerializer.Deserialize<List<student>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    students = JsonSerializer.Deserialize<List<student>>(content, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
                     Debug.WriteLine($"✅ Retrieved {students.Count} students.");
                 }
                 else
                 {
-                    var error = await response.Content.ReadAsStringAsync();
-                    Debug.WriteLine($"❌ Failed to read students: {error}");
+                    Debug.WriteLine($"❌ Failed to read students: {content}");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"❌ Exception in ReadAllStudentsAsync: {ex.Message}");
+                Debug.WriteLine($"❌ Exception in ReadAllStudentsAsync: {ex}");
             }
+
             return students;
         }
 
@@ -422,5 +436,75 @@ namespace ICpeP_Attendance_Tracker___Main.database
         }
 
         // You can similarly implement TimeAvail CRUD using the same pattern.
+
+        // ===========================
+        // time_avail CRUD OPERATIONS
+        // ===========================
+
+        //CREATE all time_avails
+        public static async Task<bool> CreateTimeAvailAsync(TimeAvail time)
+        {
+            try
+            {
+                var timeAvailRecord = new
+                {
+                   
+                    time_in = time.timeIn != default ? time.timeIn.ToString("yyyy-MM-ddTHH:mm:ssZ") : null,
+                    time_out = time.timeOut != null ? time.timeOut.ToString("yyyy-MM-ddTHH:mm:ssZ") : null,
+                    date = time.date,
+                };
+
+                var content = ToJsonContent(timeAvailRecord);
+
+                var response = await httpClient.PostAsync("time_avail", content);
+                if (response.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine("✅ TimeAvail created successfully.");
+                    return true;
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"❌ Failed to create TimeAvail: {error}");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Exception in CreateTimeAvailAsync: {ex.Message}");
+                return false;
+            }
+        }
+
+        public static async Task<List<TimeAvail>> ReadAllTimeAvailAsync()
+        {
+            var results = new List<TimeAvail>();
+            try
+            {
+                var response = await httpClient.GetAsync("time_avail?order=time_in.desc");
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    results = JsonSerializer.Deserialize<List<TimeAvail>>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                    Debug.WriteLine($"✅ Retrieved {results.Count} time_avail records.");
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"❌ Failed to read time_avail: {error}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Exception in ReadAllTimeAvailAsync: {ex.Message}");
+            }
+            return results;
+        }
+
+
+
     }
 }
