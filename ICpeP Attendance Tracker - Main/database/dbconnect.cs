@@ -25,13 +25,11 @@ namespace ICpeP_Attendance_Tracker___Main.database
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
-        // ===========================
-        // 🔹 Helper Methods
-        // ===========================
-
+        // Helper: Serialize object to JSON content
         private static StringContent ToJsonContent(object obj) =>
             new StringContent(JsonSerializer.Serialize(obj), Encoding.UTF8, "application/json");
 
+        // Helper: Send request and deserialize JSON response
         private static async Task<T> SendRequestAsync<T>(Func<Task<HttpResponseMessage>> httpAction)
         {
             try
@@ -55,6 +53,7 @@ namespace ICpeP_Attendance_Tracker___Main.database
             }
         }
 
+        // Helper: Send request without expecting data, just success/failure
         private static async Task<bool> SendNonQueryAsync(Func<Task<HttpResponseMessage>> httpAction, string successMessage)
         {
             try
@@ -79,7 +78,7 @@ namespace ICpeP_Attendance_Tracker___Main.database
         }
 
         // ===========================
-        // 🔹 Attendance CRUD
+        // Attendance CRUD
         // ===========================
 
         public static Task<bool> CreateAttendanceAsync(student student)
@@ -144,15 +143,12 @@ namespace ICpeP_Attendance_Tracker___Main.database
                 () => httpClient.DeleteAsync($"students_attendance?id=eq.{attendanceId}"),
                 "Attendance deleted successfully."
             );
-    }
-}
 
-// ===========================
-// STUDENTS CRUD OPERATIONS
-// ===========================
+        // ===========================
+        // Students CRUD
+        // ===========================
 
-// CREATE student
-public static async Task<bool> CreateStudentAsync(student student)
+        public static async Task<bool> CreateStudentAsync(student student)
         {
             try
             {
@@ -166,7 +162,7 @@ public static async Task<bool> CreateStudentAsync(student student)
                 };
 
                 var content = ToJsonContent(studentRecord);
-                var response = await httpClient.PostAsync("studentsinformation", content);
+                var response = await httpClient.PostAsync("studentsinformation", content).ConfigureAwait(false);
                 if (response.IsSuccessStatusCode)
                 {
                     Debug.WriteLine("✅ Student created successfully.");
@@ -174,7 +170,7 @@ public static async Task<bool> CreateStudentAsync(student student)
                 }
                 else
                 {
-                    var error = await response.Content.ReadAsStringAsync();
+                    var error = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     Debug.WriteLine($"❌ Failed to create student: {error}");
                     return false;
                 }
@@ -186,22 +182,20 @@ public static async Task<bool> CreateStudentAsync(student student)
             }
         }
 
-        // READ all students
         public static async Task<List<student>> ReadAllStudentsAsync()
         {
             var students = new List<student>();
 
             try
             {
-                // Check the full URL formed
                 var requestUrl = "studentsinformation?order=last_name.asc,first_name.asc";
                 Debug.WriteLine($"Requesting URL: {httpClient.BaseAddress}{requestUrl}");
 
-                var response = await httpClient.GetAsync(requestUrl);
+                var response = await httpClient.GetAsync(requestUrl).ConfigureAwait(false);
 
                 Debug.WriteLine($"Response Status Code: {response.StatusCode}");
 
-                var content = await response.Content.ReadAsStringAsync();
+                var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 Debug.WriteLine($"Response Content: {content}");
 
                 if (response.IsSuccessStatusCode)
@@ -210,7 +204,6 @@ public static async Task<bool> CreateStudentAsync(student student)
                     {
                         PropertyNameCaseInsensitive = true
                     });
-
                     Debug.WriteLine($"✅ Retrieved {students.Count} students.");
                 }
                 else
@@ -226,15 +219,14 @@ public static async Task<bool> CreateStudentAsync(student student)
             return students;
         }
 
-        // READ student by id
         public static async Task<student> ReadStudentByIdAsync(long studentId)
         {
             try
             {
-                var response = await httpClient.GetAsync($"studentsinformation?id=eq.{studentId}");
+                var response = await httpClient.GetAsync($"studentsinformation?id=eq.{studentId}").ConfigureAwait(false);
                 if (response.IsSuccessStatusCode)
                 {
-                    var json = await response.Content.ReadAsStringAsync();
+                    var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     var list = JsonSerializer.Deserialize<List<student>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     if (list != null && list.Count > 0)
                     {
@@ -249,7 +241,7 @@ public static async Task<bool> CreateStudentAsync(student student)
                 }
                 else
                 {
-                    var error = await response.Content.ReadAsStringAsync();
+                    var error = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     Debug.WriteLine($"❌ Failed to read student by ID: {error}");
                     return null;
                 }
@@ -265,17 +257,12 @@ public static async Task<bool> CreateStudentAsync(student student)
         {
             try
             {
-                // URL-encode the RFID value to be safe in the query string
                 var encodedRfid = Uri.EscapeDataString(rfid);
-
-                // Query Supabase REST API filtering by rfid
-                var response = await httpClient.GetAsync($"studentsinformation?rfid=eq.{encodedRfid}");
+                var response = await httpClient.GetAsync($"studentsinformation?rfid=eq.{encodedRfid}").ConfigureAwait(false);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var json = await response.Content.ReadAsStringAsync();
-
-                    // Deserialize JSON array to List<student>
+                    var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     var students = JsonSerializer.Deserialize<List<student>>(json, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
@@ -283,12 +270,12 @@ public static async Task<bool> CreateStudentAsync(student student)
 
                     if (students != null && students.Count > 0)
                     {
-                        return students[0]; // Return the first matching student
+                        return students[0];
                     }
                 }
                 else
                 {
-                    var error = await response.Content.ReadAsStringAsync();
+                    var error = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     Debug.WriteLine($"❌ Failed to read student by RFID: {error}");
                 }
             }
@@ -297,10 +284,9 @@ public static async Task<bool> CreateStudentAsync(student student)
                 Debug.WriteLine($"❌ Exception in ReadStudentByRfidAsync: {ex.Message}");
             }
 
-            return null; // Not found or error
+            return null;
         }
 
-        // UPDATE student
         public static async Task<bool> UpdateStudentAsync(student student)
         {
             try
@@ -320,7 +306,7 @@ public static async Task<bool> CreateStudentAsync(student student)
                     Content = content
                 };
 
-                var response = await httpClient.SendAsync(request);
+                var response = await httpClient.SendAsync(request).ConfigureAwait(false);
                 if (response.IsSuccessStatusCode)
                 {
                     Debug.WriteLine("✅ Student updated successfully.");
@@ -328,7 +314,7 @@ public static async Task<bool> CreateStudentAsync(student student)
                 }
                 else
                 {
-                    var error = await response.Content.ReadAsStringAsync();
+                    var error = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     Debug.WriteLine($"❌ Failed to update student: {error}");
                     return false;
                 }
@@ -340,12 +326,11 @@ public static async Task<bool> CreateStudentAsync(student student)
             }
         }
 
-        // DELETE student
         public static async Task<bool> DeleteStudentAsync(long studentId)
         {
             try
             {
-                var response = await httpClient.DeleteAsync($"studentsinformation?id=eq.{studentId}");
+                var response = await httpClient.DeleteAsync($"studentsinformation?id=eq.{studentId}").ConfigureAwait(false);
                 if (response.IsSuccessStatusCode)
                 {
                     Debug.WriteLine("✅ Student deleted successfully.");
@@ -353,7 +338,7 @@ public static async Task<bool> CreateStudentAsync(student student)
                 }
                 else
                 {
-                    var error = await response.Content.ReadAsStringAsync();
+                    var error = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     Debug.WriteLine($"❌ Failed to delete student: {error}");
                     return false;
                 }
@@ -365,20 +350,16 @@ public static async Task<bool> CreateStudentAsync(student student)
             }
         }
 
-        // You can similarly implement TimeAvail CRUD using the same pattern.
-
         // ===========================
-        // time_avail CRUD OPERATIONS
+        // TimeAvail CRUD
         // ===========================
 
-        //CREATE all time_avails
         public static async Task<bool> CreateTimeAvailAsync(TimeAvail time)
         {
             try
             {
                 var timeAvailRecord = new
                 {
-                   
                     time_in = time.timeIn != default ? time.timeIn.ToString("yyyy-MM-ddTHH:mm:ssZ") : null,
                     time_out = time.timeOut != null ? time.timeOut.ToString("yyyy-MM-ddTHH:mm:ssZ") : null,
                     date = time.date,
@@ -386,7 +367,7 @@ public static async Task<bool> CreateStudentAsync(student student)
 
                 var content = ToJsonContent(timeAvailRecord);
 
-                var response = await httpClient.PostAsync("time_avail", content);
+                var response = await httpClient.PostAsync("time_avail", content).ConfigureAwait(false);
                 if (response.IsSuccessStatusCode)
                 {
                     Debug.WriteLine("✅ TimeAvail created successfully.");
@@ -394,7 +375,7 @@ public static async Task<bool> CreateStudentAsync(student student)
                 }
                 else
                 {
-                    var error = await response.Content.ReadAsStringAsync();
+                    var error = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     Debug.WriteLine($"❌ Failed to create TimeAvail: {error}");
                     return false;
                 }
@@ -411,10 +392,10 @@ public static async Task<bool> CreateStudentAsync(student student)
             var results = new List<TimeAvail>();
             try
             {
-                var response = await httpClient.GetAsync("time_avail?order=time_in.desc");
+                var response = await httpClient.GetAsync("time_avail?order=time_in.desc").ConfigureAwait(false);
                 if (response.IsSuccessStatusCode)
                 {
-                    var json = await response.Content.ReadAsStringAsync();
+                    var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     results = JsonSerializer.Deserialize<List<TimeAvail>>(json, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
@@ -423,7 +404,7 @@ public static async Task<bool> CreateStudentAsync(student student)
                 }
                 else
                 {
-                    var error = await response.Content.ReadAsStringAsync();
+                    var error = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     Debug.WriteLine($"❌ Failed to read time_avail: {error}");
                 }
             }
@@ -433,8 +414,5 @@ public static async Task<bool> CreateStudentAsync(student student)
             }
             return results;
         }
-
-
-
     }
 }

@@ -44,11 +44,14 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                 dataTable.Columns.Add("Last Name", typeof(string));
                 dataTable.Columns.Add("Year Level", typeof(int));
 
-                List<student> students = await dbconnect.ReadAllStudentsAsync();
+                List<student> students = await DbConnect.ReadAllStudentsAsync();
+
 
                 foreach (student stu in students)
                 {
-                    MessageBox.Show(stu.first_name);
+                    // Optional: Remove MessageBox in production, it blocks UI
+                    // MessageBox.Show(stu.first_name);
+
                     DataRow row = dataTable.NewRow();
                     row["RFID"] = stu.rfid ?? string.Empty;
                     row["Student ID"] = stu.student_id;
@@ -109,19 +112,25 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
 
             DataGridView dgv = (DataGridView)sender;
-            long studentId = (long)dgv.Rows[e.RowIndex].Cells["Student ID"].Value;
+            string columnName = dgv.Columns[e.ColumnIndex].Name;  // FIX: assign columnName here
+
+            if (!(dgv.Rows[e.RowIndex].Cells["Student ID"].Value is long studentId))
+            {
+                MessageBox.Show("Invalid Student ID.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
             dgv.Enabled = false;
             Cursor.Current = Cursors.WaitCursor;
 
             try
             {
-                if (dgv.Columns[e.ColumnIndex].Name == "Delete")
+                if (columnName == "Delete")
                 {
                     var result = MessageBox.Show($"Delete student with ID {studentId}?\nThis cannot be undone.", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                     if (result == DialogResult.Yes)
                     {
-                        bool deleted = await dbconnect.DeleteStudentAsync(studentId);
+                        bool deleted = await DbConnect.DeleteStudentAsync(studentId);
                         if (deleted)
                         {
                             MessageBox.Show("Student deleted successfully.");
@@ -150,18 +159,20 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                         year_level = yearLevel
                     };
 
-                    var editForm = new EditStudentForm(currentStudent);
-                    if (editForm.ShowDialog() == DialogResult.OK)
+                    using (var editForm = new EditStudentForm(currentStudent))
                     {
-                        bool updated = await dbconnect.UpdateStudentAsync(editForm.UpdatedStudent);
-                        if (updated)
+                        if (editForm.ShowDialog() == DialogResult.OK)
                         {
-                            MessageBox.Show("Student updated successfully.");
-                            await LoadStudentsAsync();
-                        }
-                        else
-                        {
-                            MessageBox.Show("Failed to update student.");
+                            bool updated = await DbConnect.UpdateStudentAsync(editForm.UpdatedStudent);
+                            if (updated)
+                            {
+                                MessageBox.Show("Student updated successfully.");
+                                await LoadStudentsAsync();
+                            }
+                            else
+                            {
+                                MessageBox.Show("Failed to update student.");
+                            }
                         }
                     }
                 }

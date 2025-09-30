@@ -1,13 +1,7 @@
 ﻿using ICpeP_Attendance_Tracker___Main.models;
 using ICpeP_Attendance_Tracker___Main.database;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -28,10 +22,10 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             }
         }
 
-        // Make event handler async
+        // Async event handler for Register button
         private async void btnRegister_Click(object sender, EventArgs e)
         {
-            // Check input
+            // Validate inputs
             if (string.IsNullOrWhiteSpace(txtFirstName.Text))
             {
                 MessageBox.Show("Input First Name");
@@ -62,41 +56,43 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                 return;
             }
 
-            firstName = txtFirstName.Text;
-            lastName = txtLastName.Text;
+            string firstName = txtFirstName.Text.Trim();
+            string lastName = txtLastName.Text.Trim();
 
-            if (!long.TryParse(txtStudentId.Text, out studentid))
+            if (!long.TryParse(txtStudentId.Text.Trim(), out long studentId))
             {
                 MessageBox.Show("Student ID must be a valid number");
                 return;
             }
 
-            rfid = txtRFID.Text;
-            yearLevel = cmbYearLevel.SelectedIndex;
+            string rfid = txtRFID.Text.Trim();
+            int yearLevel = cmbYearLevel.SelectedIndex;
 
-            student student = new student(rfid, studentid, firstName, lastName, yearLevel);
+            var student = new student(rfid, studentId, firstName, lastName, yearLevel);
 
             try
             {
+                // Check if student already exists by ID
                 // Check if student already exists by student ID (long)
-                var existingStudent = await dbconnect.ReadStudentByIdAsync(studentid);
+                var existingStudent = await DbConnect.ReadStudentByIdAsync(studentId);
                 if (existingStudent != null)
                 {
-                    MessageBox.Show($"Student ID {studentid} already exists. Use a different ID or update the existing record.",
+                    MessageBox.Show($"Student ID {studentId} already exists. Use a different ID or update the existing record.",
                                 "Duplicate Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
                 // Register new student asynchronously
-                bool success = await dbconnect.CreateStudentAsync(student);
+                bool success = await DbConnect.CreateStudentAsync(student);
+
                 if (success)
                 {
-                    MessageBox.Show($"Student '{firstName} {lastName}' (ID: {studentid}) registered successfully!",
+                    MessageBox.Show($"Student '{firstName} {lastName}' (ID: {studentId}) registered successfully!",
                                   "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                     ClearForm();
 
-                    Debug.WriteLine($"✅ Student registered: ID {studentid}");
+                    Debug.WriteLine($"✅ Student registered: ID {studentId}");
                 }
                 else
                 {

@@ -38,7 +38,14 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                 dataTable.Columns.Add("Status", typeof(string));
 
                 // Fetch attendance records asynchronously
-                var attendanceRecords = await dbconnect.ReadAllAttendanceAsync();
+                var attendanceRecords = await DbConnect.ReadAllAttendanceAsync();
+
+                if (attendanceRecords == null)
+                {
+                    // Handle the null case, e.g., show message or return
+                    MessageBox.Show("No attendance records found.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
 
                 foreach (var record in attendanceRecords)
                 {

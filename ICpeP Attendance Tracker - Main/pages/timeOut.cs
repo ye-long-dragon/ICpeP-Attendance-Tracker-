@@ -28,7 +28,7 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             try
             {
                 // Assume you have this method implemented to get a student by RFID:
-                var studentRecord = await dbconnect.ReadStudentByRfidAsync(rfid);
+                var studentRecord = await DbConnect.ReadStudentByRfidAsync(rfid);
 
                 if (studentRecord == null)
                 {
@@ -49,7 +49,7 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                 DateTime today = DateTime.Now.Date;
 
                 // Get all attendance records for this student today
-                var timeAvails = await dbconnect.ReadAllAttendanceAsync();
+                var timeAvails = await DbConnect.ReadAllAttendanceAsync();
 
 
                 //check what attendance is 

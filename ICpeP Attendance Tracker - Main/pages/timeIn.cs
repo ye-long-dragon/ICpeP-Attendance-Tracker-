@@ -26,7 +26,7 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             try
             {
                 // Get student by RFID (returns a student object)
-                var student = await dbconnect.ReadStudentByRfidAsync(rfid);
+                var student = await DbConnect.ReadStudentByRfidAsync(rfid);
                 if (student == null)
                 {
                     MessageBox.Show("RFID not recognized. Please register first.");
@@ -41,7 +41,7 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                 student.status = "Checked In";
                 student.date = DateTime.Now;
 
-                bool created = await dbconnect.CreateAttendanceAsync(student);
+                bool created = await DbConnect.CreateAttendanceAsync(student);
                 if (created)
                 {
                     MessageBox.Show($"Welcome, {student.first_name} {student.last_name}! You have successfully timed in at {student.date.ToString("hh:mm tt")}");
