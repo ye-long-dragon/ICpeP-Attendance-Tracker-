@@ -10,13 +10,13 @@ using System.Threading.Tasks;
 
 namespace ICpeP_Attendance_Tracker___Main.database
 {
-    public class dbconnect
+    public class DbConnect
     {
         private static readonly HttpClient httpClient = new HttpClient();
-        private static readonly string supabaseUrl = "https://your-project-ref.supabase.co/rest/v1";
-        private static readonly string supabaseApiKey = "your-anon-or-service-role-api-key";
+        private static readonly string supabaseUrl = "https://axwduoswuwxdqimchpvs.supabase.co/rest/v1";
+        private static readonly string supabaseApiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4d2R1b3N3dXd4ZHFpbWNocHZzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODE5MzcwNywiZXhwIjoyMDczNzY5NzA3fQ.qLuyjji-hGGBBUUJ-tdC9EHzoXk3pmEBnbz-mb9bNjw";
 
-        static dbconnect()
+        static DbConnect()
         {
             httpClient.BaseAddress = new Uri(supabaseUrl);
             httpClient.DefaultRequestHeaders.Clear();
@@ -25,204 +25,134 @@ namespace ICpeP_Attendance_Tracker___Main.database
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
-        // Helper method to serialize object to JSON content
-        private static StringContent ToJsonContent(object obj)
-        {
-            var json = JsonSerializer.Serialize(obj);
-            return new StringContent(json, Encoding.UTF8, "application/json");
-        }
-
         // ===========================
-        // ATTENDANCE CRUD OPERATIONS
+        // 🔹 Helper Methods
         // ===========================
 
-        // CREATE attendance record
-        public static async Task<bool> CreateAttendanceAsync(student student)
+        private static StringContent ToJsonContent(object obj) =>
+            new StringContent(JsonSerializer.Serialize(obj), Encoding.UTF8, "application/json");
+
+        private static async Task<T> SendRequestAsync<T>(Func<Task<HttpResponseMessage>> httpAction)
         {
             try
             {
-                var attendanceRecord = new
-                {
-                    student_id = student.student_id,
-                    rfid = student.rfid,
-                    date = student.date != default ? student.date.ToString("yyyy-MM-dd") : DateTime.UtcNow.ToString("yyyy-MM-dd"),
-                    status = string.IsNullOrWhiteSpace(student.status) ? null : student.status
-                };
+                var response = await httpAction().ConfigureAwait(false);
 
-                var content = ToJsonContent(attendanceRecord);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    Debug.WriteLine($"❌ Request failed: {error}");
+                    return default;
+                }
 
-                // POST to attendance table
-                var response = await httpClient.PostAsync("students_attendance", content);
-                if (response.IsSuccessStatusCode)
-                {
-                    Debug.WriteLine("✅ Attendance created successfully.");
-                    return true;
-                }
-                else
-                {
-                    var error = await response.Content.ReadAsStringAsync();
-                    Debug.WriteLine($"❌ Failed to create attendance: {error}");
-                    return false;
-                }
+                var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                return JsonSerializer.Deserialize<T>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"❌ Exception in CreateAttendanceAsync: {ex.Message}");
+                Debug.WriteLine($"❌ Exception: {ex.Message}");
+                return default;
+            }
+        }
+
+        private static async Task<bool> SendNonQueryAsync(Func<Task<HttpResponseMessage>> httpAction, string successMessage)
+        {
+            try
+            {
+                var response = await httpAction().ConfigureAwait(false);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine($"✅ {successMessage}");
+                    return true;
+                }
+
+                var error = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                Debug.WriteLine($"❌ Request failed: {error}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Exception: {ex.Message}");
                 return false;
             }
         }
 
-        // READ all attendance records with optional filters
-        public static async Task<List<Dictionary<string, object>>> ReadAllAttendanceAsync(int? studentId = null, DateTime? fromDate = null, DateTime? toDate = null)
+        // ===========================
+        // 🔹 Attendance CRUD
+        // ===========================
+
+        public static Task<bool> CreateAttendanceAsync(student student)
         {
-            var results = new List<Dictionary<string, object>>();
-            try
+            var attendanceRecord = new
             {
-                var queryParams = new List<string>();
+                student_id = student.student_id,
+                rfid = student.rfid,
+                date = student.date != default ? student.date.ToString("yyyy-MM-dd") : DateTime.UtcNow.ToString("yyyy-MM-dd"),
+                status = string.IsNullOrWhiteSpace(student.status) ? null : student.status
+            };
 
-                if (studentId.HasValue)
-                    queryParams.Add($"student_id=eq.{studentId.Value}");
-
-                if (fromDate.HasValue)
-                    queryParams.Add($"date=gte.{fromDate.Value:yyyy-MM-dd}");
-
-                if (toDate.HasValue)
-                    queryParams.Add($"date=lte.{toDate.Value:yyyy-MM-dd}");
-
-                // Order by date descending, id ascending
-                queryParams.Add("order=date.desc,id.asc");
-
-                var queryString = string.Join("&", queryParams);
-                var url = $"students_attendance?{queryString}";
-
-                var response = await httpClient.GetAsync(url);
-                if (response.IsSuccessStatusCode)
-                {
-                    var json = await response.Content.ReadAsStringAsync();
-                    results = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    Debug.WriteLine($"✅ Retrieved {results.Count} attendance records.");
-                }
-                else
-                {
-                    var error = await response.Content.ReadAsStringAsync();
-                    Debug.WriteLine($"❌ Failed to read attendance: {error}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"❌ Exception in ReadAllAttendanceAsync: {ex.Message}");
-            }
-            return results;
+            return SendNonQueryAsync(
+                () => httpClient.PostAsync("students_attendance", ToJsonContent(attendanceRecord)),
+                "Attendance created successfully."
+            );
         }
 
-        // READ attendance by id
+        public static Task<List<Dictionary<string, object>>> ReadAllAttendanceAsync(int? studentId = null, DateTime? fromDate = null, DateTime? toDate = null)
+        {
+            var queryParams = new List<string>();
+
+            if (studentId.HasValue) queryParams.Add($"student_id=eq.{studentId.Value}");
+            if (fromDate.HasValue) queryParams.Add($"date=gte.{fromDate.Value:yyyy-MM-dd}");
+            if (toDate.HasValue) queryParams.Add($"date=lte.{toDate.Value:yyyy-MM-dd}");
+            queryParams.Add("order=date.desc,id.asc");
+
+            var url = $"students_attendance?{string.Join("&", queryParams)}";
+
+            return SendRequestAsync<List<Dictionary<string, object>>>(() => httpClient.GetAsync(url));
+        }
+
         public static async Task<Dictionary<string, object>> ReadAttendanceByIdAsync(long attendanceId)
         {
-            try
-            {
-                var url = $"students_attendance?id=eq.{attendanceId}";
-                var response = await httpClient.GetAsync(url);
-                if (response.IsSuccessStatusCode)
-                {
-                    var json = await response.Content.ReadAsStringAsync();
-                    var list = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    if (list != null && list.Count > 0)
-                    {
-                        Debug.WriteLine($"✅ Retrieved attendance record ID {attendanceId}.");
-                        return list[0];
-                    }
-                    else
-                    {
-                        Debug.WriteLine($"⚠️ No attendance record found for ID {attendanceId}.");
-                        return null;
-                    }
-                }
-                else
-                {
-                    var error = await response.Content.ReadAsStringAsync();
-                    Debug.WriteLine($"❌ Failed to read attendance by ID: {error}");
-                    return null;
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"❌ Exception in ReadAttendanceByIdAsync: {ex.Message}");
-                return null;
-            }
+            var list = await SendRequestAsync<List<Dictionary<string, object>>>(() =>
+                httpClient.GetAsync($"students_attendance?id=eq.{attendanceId}")
+            ).ConfigureAwait(false);
+
+            return list != null && list.Count > 0 ? list[0] : null;
         }
 
-        // UPDATE attendance by id
-        public static async Task<bool> UpdateAttendanceAsync(long attendanceId, student student)
+        public static Task<bool> UpdateAttendanceAsync(long attendanceId, student student)
         {
-            try
+            var attendanceRecord = new
             {
-                var attendanceRecord = new
-                {
-                    student_id = student.student_id,
-                    rfid = string.IsNullOrWhiteSpace(student.rfid) ? null : student.rfid,
-                    date = student.date != default ? student.date.ToString("yyyy-MM-dd") : DateTime.UtcNow.ToString("yyyy-MM-dd"),
-                    status = string.IsNullOrWhiteSpace(student.status) ? null : student.status
-                };
+                student_id = student.student_id,
+                rfid = string.IsNullOrWhiteSpace(student.rfid) ? null : student.rfid,
+                date = student.date != default ? student.date.ToString("yyyy-MM-dd") : DateTime.UtcNow.ToString("yyyy-MM-dd"),
+                status = string.IsNullOrWhiteSpace(student.status) ? null : student.status
+            };
 
-                var content = ToJsonContent(attendanceRecord);
-
-                // PATCH request to update record by id
-                var request = new HttpRequestMessage(new HttpMethod("PATCH"), $"students_attendance?id=eq.{attendanceId}")
-                {
-                    Content = content
-                };
-
-                var response = await httpClient.SendAsync(request);
-                if (response.IsSuccessStatusCode)
-                {
-                    Debug.WriteLine("✅ Attendance updated successfully.");
-                    return true;
-                }
-                else
-                {
-                    var error = await response.Content.ReadAsStringAsync();
-                    Debug.WriteLine($"❌ Failed to update attendance: {error}");
-                    return false;
-                }
-            }
-            catch (Exception ex)
+            var request = new HttpRequestMessage(new HttpMethod("PATCH"), $"students_attendance?id=eq.{attendanceId}")
             {
-                Debug.WriteLine($"❌ Exception in UpdateAttendanceAsync: {ex.Message}");
-                return false;
-            }
+                Content = ToJsonContent(attendanceRecord)
+            };
+
+            return SendNonQueryAsync(() => httpClient.SendAsync(request), "Attendance updated successfully.");
         }
 
-        // DELETE attendance by id
-        public static async Task<bool> DeleteAttendanceAsync(long attendanceId)
-        {
-            try
-            {
-                var response = await httpClient.DeleteAsync($"students_attendance?id=eq.{attendanceId}");
-                if (response.IsSuccessStatusCode)
-                {
-                    Debug.WriteLine("✅ Attendance deleted successfully.");
-                    return true;
-                }
-                else
-                {
-                    var error = await response.Content.ReadAsStringAsync();
-                    Debug.WriteLine($"❌ Failed to delete attendance: {error}");
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"❌ Exception in DeleteAttendanceAsync: {ex.Message}");
-                return false;
-            }
-        }
+        public static Task<bool> DeleteAttendanceAsync(long attendanceId) =>
+            SendNonQueryAsync(
+                () => httpClient.DeleteAsync($"students_attendance?id=eq.{attendanceId}"),
+                "Attendance deleted successfully."
+            );
+    }
+}
 
-        // ===========================
-        // STUDENTS CRUD OPERATIONS
-        // ===========================
+// ===========================
+// STUDENTS CRUD OPERATIONS
+// ===========================
 
-        // CREATE student
-        public static async Task<bool> CreateStudentAsync(student student)
+// CREATE student
+public static async Task<bool> CreateStudentAsync(student student)
         {
             try
             {
