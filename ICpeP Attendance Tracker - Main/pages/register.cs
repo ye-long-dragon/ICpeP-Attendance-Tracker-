@@ -1,5 +1,5 @@
-﻿using ICpeP_Attendance_Tracker___Main.database;
-using ICpeP_Attendance_Tracker___Main.models;
+﻿using ICpeP_Attendance_Tracker___Main.models;
+using ICpeP_Attendance_Tracker___Main.database;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -28,9 +28,10 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             }
         }
 
+        // Make event handler async
         private async void btnRegister_Click(object sender, EventArgs e)
         {
-            // Validate inputs
+            // Check input
             if (string.IsNullOrWhiteSpace(txtFirstName.Text))
             {
                 MessageBox.Show("Input First Name");
@@ -61,24 +62,23 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                 return;
             }
 
-            // Parse student ID safely
-            if (!long.TryParse(txtStudentId.Text, out long studentid))
+            firstName = txtFirstName.Text;
+            lastName = txtLastName.Text;
+
+            if (!long.TryParse(txtStudentId.Text, out studentid))
             {
                 MessageBox.Show("Student ID must be a valid number");
                 return;
             }
 
-            string firstName = txtFirstName.Text.Trim();
-            string lastName = txtLastName.Text.Trim();
-            string rfid = txtRFID.Text.Trim();
-            int yearLevel = cmbYearLevel.SelectedIndex;  // Assuming year levels start at 1
+            rfid = txtRFID.Text;
+            yearLevel = cmbYearLevel.SelectedIndex;
 
-            // Create student object
             student student = new student(rfid, studentid, firstName, lastName, yearLevel);
 
             try
             {
-                // Check if student with this ID already exists (async)
+                // Check if student already exists by student ID (long)
                 var existingStudent = await dbconnect.ReadStudentByIdAsync(studentid);
                 if (existingStudent != null)
                 {
@@ -87,7 +87,7 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                     return;
                 }
 
-                // Register student (async)
+                // Register new student asynchronously
                 bool success = await dbconnect.CreateStudentAsync(student);
                 if (success)
                 {
@@ -105,8 +105,8 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"❌ Error during registration: {ex.Message}");
                 MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Debug.WriteLine($"❌ Exception in btnRegister_Click: {ex}");
             }
         }
 
@@ -117,7 +117,7 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             txtStudentId?.Clear();
             txtFirstName?.Clear();
             txtLastName?.Clear();
-            cmbYearLevel.SelectedIndex = 0;  // Reset to "Select Year" or default
+            cmbYearLevel.SelectedIndex = 0;
             txtStudentId?.Focus();  // Focus back to first field
         }
     }

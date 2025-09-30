@@ -1,6 +1,6 @@
-﻿using ICpeP_Attendance_Tracker___Main.database;
-using ICpeP_Attendance_Tracker___Main.models;
+﻿using ICpeP_Attendance_Tracker___Main.models;
 using ICpeP_Attendance_Tracker___Main.pages.popups;
+using ICpeP_Attendance_Tracker___Main.database;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -16,10 +16,9 @@ namespace ICpeP_Attendance_Tracker___Main.pages
         {
             InitializeComponent();
             SetupButtonEvents();
-            this.Load += StudentList_Load;  // Async load event
+            this.Load += StudentList_Load;  // Async load on control load
         }
 
-        // Async event handler for control load
         private async void StudentList_Load(object sender, EventArgs e)
         {
             await LoadStudentsAsync();
@@ -30,7 +29,7 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             studentListView.CellContentClick += StudentListView_CellContentClick;
         }
 
-        // Async method to load students and bind to DataGridView
+        // Async load students from Supabase REST API
         public async Task LoadStudentsAsync()
         {
             try
@@ -45,11 +44,11 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                 dataTable.Columns.Add("Last Name", typeof(string));
                 dataTable.Columns.Add("Year Level", typeof(int));
 
-                // Await async DB call
                 List<student> students = await dbconnect.ReadAllStudentsAsync();
 
                 foreach (student stu in students)
                 {
+                    MessageBox.Show(stu.first_name);
                     DataRow row = dataTable.NewRow();
                     row["RFID"] = stu.rfid ?? string.Empty;
                     row["Student ID"] = stu.student_id;
@@ -60,11 +59,11 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                 }
 
                 studentListView.DataSource = dataTable;
-
                 studentListView.ReadOnly = true;
                 studentListView.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
                 studentListView.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
+                // Add Edit button column if not present
                 if (studentListView.Columns["Update"] == null)
                 {
                     var updateColumn = new DataGridViewButtonColumn
@@ -78,6 +77,7 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                     studentListView.Columns.Insert(5, updateColumn);
                 }
 
+                // Add Delete button column if not present
                 if (studentListView.Columns["Delete"] == null)
                 {
                     var deleteColumn = new DataGridViewButtonColumn
@@ -103,41 +103,33 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             }
         }
 
-        // Async event handler for button clicks in DataGridView
+        // Async handler for Edit/Delete button clicks
         private async void StudentListView_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
 
-            var dgv = (DataGridView)sender;
-
-            if (!(dgv.Rows[e.RowIndex].Cells["Student ID"].Value is long studentId))
-            {
-                MessageBox.Show("Invalid Student ID.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
+            DataGridView dgv = (DataGridView)sender;
+            long studentId = (long)dgv.Rows[e.RowIndex].Cells["Student ID"].Value;
 
             dgv.Enabled = false;
             Cursor.Current = Cursors.WaitCursor;
 
             try
             {
-                string columnName = dgv.Columns[e.ColumnIndex].Name;
-
-                if (columnName == "Delete")
+                if (dgv.Columns[e.ColumnIndex].Name == "Delete")
                 {
-                    var confirm = MessageBox.Show($"Delete student with ID {studentId}?\nThis action cannot be undone.", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-                    if (confirm == DialogResult.Yes)
+                    var result = MessageBox.Show($"Delete student with ID {studentId}?\nThis cannot be undone.", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                    if (result == DialogResult.Yes)
                     {
-                        // Await async delete
                         bool deleted = await dbconnect.DeleteStudentAsync(studentId);
                         if (deleted)
                         {
-                            MessageBox.Show("Student deleted successfully.", "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            await LoadStudentsAsync();  // Refresh list async
+                            MessageBox.Show("Student deleted successfully.");
+                            await LoadStudentsAsync();
                         }
                         else
                         {
-                            MessageBox.Show("Failed to delete student.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            MessageBox.Show("Failed to delete student.");
                         }
                     }
                 }
@@ -158,21 +150,18 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                         year_level = yearLevel
                     };
 
-                    using (var editForm = new EditStudentForm(currentStudent))
+                    var editForm = new EditStudentForm(currentStudent);
+                    if (editForm.ShowDialog() == DialogResult.OK)
                     {
-                        if (editForm.ShowDialog() == DialogResult.OK)
+                        bool updated = await dbconnect.UpdateStudentAsync(editForm.UpdatedStudent);
+                        if (updated)
                         {
-                            // Await async update
-                            bool updated = await dbconnect.UpdateStudentAsync(editForm.UpdatedStudent);
-                            if (updated)
-                            {
-                                MessageBox.Show("Student updated successfully.", "Updated", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                await LoadStudentsAsync();  // Refresh list async
-                            }
-                            else
-                            {
-                                MessageBox.Show("Failed to update student.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            }
+                            MessageBox.Show("Student updated successfully.");
+                            await LoadStudentsAsync();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Failed to update student.");
                         }
                     }
                 }

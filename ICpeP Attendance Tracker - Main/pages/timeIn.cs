@@ -1,14 +1,9 @@
-﻿using ICpeP_Attendance_Tracker___Main.database;
-using ICpeP_Attendance_Tracker___Main.models;
+﻿using ICpeP_Attendance_Tracker___Main.models;
+using ICpeP_Attendance_Tracker___Main.database;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Globalization;
 
 namespace ICpeP_Attendance_Tracker___Main.pages
 {
@@ -19,7 +14,7 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             InitializeComponent();
         }
 
-        private void btnTimeIn_Click(object sender, EventArgs e)
+        private async void btnTimeIn_Click(object sender, EventArgs e)
         {
             string rfid = txtRFID.Text.Trim();
             if (string.IsNullOrEmpty(rfid))
@@ -28,58 +23,40 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                 return;
             }
 
-            // Look into each student for same rfid
-            var student = dbconnect.ReadStudentById(rfid);
-            if (student == null)
+            try
             {
-                MessageBox.Show("RFID not recognized. Please register first.");
-                return;
-            }
-
-            //check timeAvail for existing time in today
-            DateTime now = DateTime.Now;
-            var timeAvails = dbconnect.ReadAllTimeIn();
-            TimeAvail openTime;
-            
-
-            foreach (TimeAvail timeAvail in timeAvails)
-            {
-                //change to DateTime
-
-
-                if (now == DateTime.MinValue)
+                // Get student by RFID (returns a student object)
+                var student = await dbconnect.ReadStudentByRfidAsync(rfid);
+                if (student == null)
                 {
-                    MessageBox.Show("Date is empty.");
+                    MessageBox.Show("RFID not recognized. Please register first.");
                     return;
                 }
-                //check if time avail is for today and the time in is in the morning
-                if (timeAvail.date == now && timeAvail.timeIn < DateTime.Parse("12:00 PM"))
+
+                DateTime today = DateTime.Now.Date;
+
+                
+
+                // Prepare attendance record
+                student.status = "Checked In";
+                student.date = DateTime.Now;
+
+                bool created = await dbconnect.CreateAttendanceAsync(student);
+                if (created)
                 {
-                    MessageBox.Show("You have already timed in for today.");
-                    openTime = timeAvail;
-                    
+                    MessageBox.Show($"Welcome, {student.first_name} {student.last_name}! You have successfully timed in at {student.date.ToString("hh:mm tt")}");
                 }
+                else
+                {
+                    MessageBox.Show("Failed to record time in. Please try again.");
+                }
+
+                txtRFID.Clear();
             }
-
-            // Record time in
-            var s = new student
+            catch (Exception ex)
             {
-                rfid = student.ContainsKey("rfid") && student["rfid"] != null ? student["rfid"].ToString() : string.Empty,
-                student_id = student.ContainsKey("id") && student["id"] != null ? (long)student["id"] : 0L,  // Map "id" to "student_id"
-                first_name = student.ContainsKey("first_name") && student["first_name"] != null ? student["first_name"].ToString() : string.Empty,
-                last_name = student.ContainsKey("last_name") && student["last_name"] != null ? student["last_name"].ToString() : string.Empty,
-                year_level = student.ContainsKey("year_level") && student["year_level"] != null ? (int)student["year_level"] : 0,
-            };
-
-            s.status = "Checked In";
-            s.date = now;
-
-            dbconnect.CreateAttendance(s);
-            MessageBox.Show($"Welcome, {s.first_name} {s.last_name}! You have successfully timed in at {now.ToString("hh:mm tt")}.");
-
-            txtRFID.Clear();
-
-
+                MessageBox.Show($"Error during time in: {ex.Message}");
+            }
         }
 
         private void btnBack_Click(object sender, EventArgs e)
@@ -88,11 +65,6 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             {
                 form.ShowMainPage();  // Switches back to main
             }
-        }
-
-        private void pictureBox1_Click(object sender, EventArgs e)
-        {
-
         }
     }
 }
