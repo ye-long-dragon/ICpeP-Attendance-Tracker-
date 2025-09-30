@@ -15,12 +15,6 @@ namespace ICpeP_Attendance_Tracker___Main.pages
 {
     public partial class register : UserControl
     {
-        public string firstName;
-        public string lastName;
-        public long studentid;
-        public string rfid;
-        public int yearLevel;
-
         public register()
         {
             InitializeComponent();
@@ -34,9 +28,9 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             }
         }
 
-        private void btnRegister_Click(object sender, EventArgs e)
+        private async void btnRegister_Click(object sender, EventArgs e)
         {
-            //check input
+            // Validate inputs
             if (string.IsNullOrWhiteSpace(txtFirstName.Text))
             {
                 MessageBox.Show("Input First Name");
@@ -61,24 +55,31 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                 return;
             }
 
-            if (cmbYearLevel.SelectedIndex <= -1) // assuming 0 = "Select Year"
+            if (cmbYearLevel.SelectedIndex <= 0) // Assuming index 0 is "Select Year"
             {
                 MessageBox.Show("Select Year Level");
                 return;
             }
 
+            // Parse student ID safely
+            if (!long.TryParse(txtStudentId.Text, out long studentid))
+            {
+                MessageBox.Show("Student ID must be a valid number");
+                return;
+            }
 
+            string firstName = txtFirstName.Text.Trim();
+            string lastName = txtLastName.Text.Trim();
+            string rfid = txtRFID.Text.Trim();
+            int yearLevel = cmbYearLevel.SelectedIndex;  // Assuming year levels start at 1
 
-            firstName = txtFirstName.Text;
-            lastName = txtLastName.Text;
-            studentid = long.Parse(txtStudentId.Text);
-            rfid = txtRFID.Text;
-            yearLevel = cmbYearLevel.SelectedIndex;
-
+            // Create student object
             student student = new student(rfid, studentid, firstName, lastName, yearLevel);
 
-            
-                var existingStudent = dbconnect.ReadStudentById(rfid);
+            try
+            {
+                // Check if student with this ID already exists (async)
+                var existingStudent = await dbconnect.ReadStudentByIdAsync(studentid);
                 if (existingStudent != null)
                 {
                     MessageBox.Show($"Student ID {studentid} already exists. Use a different ID or update the existing record.",
@@ -86,22 +87,27 @@ namespace ICpeP_Attendance_Tracker___Main.pages
                     return;
                 }
 
-                    dbconnect.RegisterStudent(student);
+                // Register student (async)
+                bool success = await dbconnect.CreateStudentAsync(student);
+                if (success)
+                {
                     MessageBox.Show($"Student '{firstName} {lastName}' (ID: {studentid}) registered successfully!",
                                   "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                    // Clear form for next entry
                     ClearForm();
 
-                    // Optional: Log success
                     Debug.WriteLine($"✅ Student registered: ID {studentid}");
-                
-           
-           
-
-
-        
-
+                }
+                else
+                {
+                    MessageBox.Show("Failed to register student. Please try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error during registration: {ex.Message}");
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         // Helper: Clear form inputs
@@ -111,7 +117,7 @@ namespace ICpeP_Attendance_Tracker___Main.pages
             txtStudentId?.Clear();
             txtFirstName?.Clear();
             txtLastName?.Clear();
-            cmbYearLevel.SelectedIndex=0;
+            cmbYearLevel.SelectedIndex = 0;  // Reset to "Select Year" or default
             txtStudentId?.Focus();  // Focus back to first field
         }
     }
